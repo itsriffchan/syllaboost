@@ -237,7 +237,17 @@ async function parseSyllabus(): Promise<Roadmap> {
     body: JSON.stringify(payload),
   })
 
-  const result = await response.json()
+  const responseText = await response.text()
+  let result: { success?: boolean; data?: Roadmap; error?: ApiError }
+
+  try {
+    result = JSON.parse(responseText)
+  } catch {
+    throw new Error(
+      `Server returned non-JSON response (${response.status}). ${responseText.slice(0, 180) || 'No response body.'}`
+    )
+  }
+
   if (!response.ok || result.success === false) {
     const error = result.error as ApiError | undefined
     throw new Error(error?.message || 'Failed to generate roadmap')
