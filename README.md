@@ -29,7 +29,7 @@ SyllabusAI bridges the gap between passive learning and active building by:
 >>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
 
 - 📤 **Upload** course syllabi (PDF, DOCX, or plain text)
-- 🤖 **Parse** syllabus content using Google Gemini AI
+- 🤖 **Parse** syllabus content using Groq AI
 - 📋 **Generate** a structured weekly project roadmap
 - 📊 **Display** projects in a clean dashboard UI
 - 📥 **Export** roadmap as PDF
@@ -56,21 +56,18 @@ SyllabusAI bridges the gap between passive learning and active building by:
 ## Tech Stack
 
 ### Frontend
-- **React** 18.x
+- **TypeScript** (type-safe vanilla JS)
 - **Vite** 5.x (build tool)
 - **Tailwind CSS** 3.x (styling)
-- **React Query** 5.x (state management)
-- **React Router** 6.x (routing)
 - **jsPDF** 2.x (PDF export)
 
 ### Backend
 - **Node.js** 20 LTS
 - **Express** 5.x
-- **Google Gemini API** (AI engine)
-- **Multer** 1.x (file uploads)
+- **Groq API** (AI engine - llama-3.3-70b-versatile)
 - **pdf-parse** + **Mammoth** (file parsing)
-- **Zod** 3.x (validation)
-- **express-session** (session management)
+- **CORS** (cross-origin requests)
+- **UUID** (unique ID generation)
 
 ---
 
@@ -81,7 +78,7 @@ Before you start, ensure you have:
 - **Node.js** 20.x LTS or higher
 - **npm** 9.x or higher
 - **Git**
-- **Google Gemini API Key** (free at https://aistudio.google.com/app/apikey)
+- **Groq API Key** (free at https://console.groq.com/)
 
 Check your versions:
 ```bash
@@ -118,35 +115,22 @@ npm install
 ### 3. Set Up Environment Variables
 
 #### Backend (`.env.local`)
-Copy `.env.example` to `.env.local` and fill in your API key:
+Copy `.env.example` to `.env.local` and fill in your Groq API key:
 
 ```bash
-cd backend
 cp .env.example .env.local
 ```
 
 Edit `.env.local`:
 ```
-GOOGLE_API_KEY=your-actual-google-api-key-here
+GROQ_API_KEY=your-actual-groq-api-key-here
 PORT=3001
-NODE_ENV=development
-SESSION_SECRET=your-secret-key-min-32-characters-long
-FRONTEND_URL=http://localhost:5173
-GEMINI_MODEL=gemini-1.5-pro
 ```
 
-Get your free Google Gemini API key: https://aistudio.google.com/app/apikey
+Get your free Groq API key: https://console.groq.com/
 
-#### Frontend (`.env.local`)
-```bash
-cd frontend
-cp .env.example .env.local
-```
-
-Edit `.env.local`:
-```
-VITE_API_URL=http://localhost:3001
-```
+#### Frontend
+No additional environment variables needed. The frontend will automatically connect to the backend at `http://localhost:3001`.
 
 ---
 
@@ -156,7 +140,7 @@ VITE_API_URL=http://localhost:3001
 
 **Terminal 1 - Backend:**
 ```bash
-cd backend
+npm install
 npm run dev
 ```
 Server will start at `http://localhost:3001`
@@ -164,6 +148,7 @@ Server will start at `http://localhost:3001`
 **Terminal 2 - Frontend:**
 ```bash
 cd frontend
+npm install
 npm run dev
 ```
 App will be available at `http://localhost:5173`
@@ -171,7 +156,7 @@ App will be available at `http://localhost:5173`
 ### Option 2: Run Backend Only (to test API)
 
 ```bash
-cd backend
+npm install
 npm run dev
 ```
 
@@ -181,20 +166,11 @@ Test the API:
 curl http://localhost:3001/api/health
 ```
 
-### Option 3: Build for Production
+### Option 3: Start Backend (for Production)
 
-**Backend:**
 ```bash
-cd backend
-npm run build
+npm install
 npm start
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm run build
-npm preview
 ```
 
 ---
@@ -205,40 +181,20 @@ npm preview
 devweek-hackathon/
 ├── README.md
 ├── docs/
-│   └── SYSTEM_DESIGN.md          # Complete system design document
-├── backend/
-│   ├── src/
-│   │   ├── routes/               # API endpoints
-│   │   │   ├── parse.route.js
-│   │   │   ├── roadmap.route.js
-│   │   │   └── health.route.js
-│   │   ├── services/             # Business logic
-│   │   │   ├── fileParser.service.js
-│   │   │   ├── gemini.service.js
-│   │   │   ├── validator.service.js
-│   │   │   └── roadmap.service.js
-│   │   ├── middleware/           # Express middleware
-│   │   │   ├── upload.middleware.js
-│   │   │   └── errorHandler.middleware.js
-│   │   ├── utils/                # Utilities
-│   │   │   ├── logger.js
-│   │   │   └── constants.js
-│   │   ├── app.js                # Express app
-│   │   └── server.js             # Server entry point
-│   ├── package.json
-│   ├── .env                      # Default environment variables
-│   ├── .env.example              # Environment template
-│   └── .gitignore
+│   └── SYSTEM_DESIGN.md               # Complete system design document
 ├── frontend/
 │   ├── src/
-│   │   ├── components/           # React components
-│   │   ├── pages/                # Page routes
-│   │   ├── services/             # API calls
-│   │   ├── hooks/                # Custom hooks
-│   │   └── App.jsx
+│   │   ├── main.ts                    # TypeScript entry point
+│   │   ├── index.css                  # Tailwind styles
+│   │   └── vite-env.d.ts              # Vite type definitions
+│   ├── index.html
 │   ├── package.json
-│   ├── .env.example
 │   └── vite.config.js
+├── server.js                          # Express backend entry point
+├── package.json                       # Backend dependencies
+├── .env.local                         # Environment variables (not committed)
+├── .env.example                       # Environment template
+└── .gitignore
 ```
 
 ---
@@ -255,51 +211,51 @@ http://localhost:3001/api
 #### 1. Parse Syllabus
 **POST** `/api/parse`
 
-Upload a syllabus and get a generated roadmap.
+Upload a syllabus (PDF, DOCX, or text) and get a generated roadmap.
 
-**Request:**
-```bash
-curl -X POST http://localhost:3001/api/parse \
-  -F "file=@syllabus.pdf" \
-  -F "courseTitle=Introduction to Python" \
-  -F "totalWeeks=8"
+**Request (JSON):**
+```json
+{
+  "fileBase64": "base64-encoded-file-content",
+  "mimeType": "application/pdf",
+  "fileName": "syllabus.pdf",
+  "courseTitle": "Introduction to Python"
+}
+```
+
+Or for plain text:
+```json
+{
+  "rawText": "Course syllabus content here...",
+  "courseTitle": "Introduction to Python"
+}
 ```
 
 **Response (200 OK):**
 ```json
 {
   "success": true,
-  "roadmap": {
-    "id": "uuid-v4",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
     "courseTitle": "Introduction to Python",
     "totalWeeks": 8,
     "generatedAt": "2026-05-06T10:30:00Z",
     "weeks": [
       {
         "weekNumber": 1,
-        "weekLabel": "Week 1",
-        "topics": ["Variables", "Data Types"],
-        "learningOutcomes": ["Declare variables", "Use data types"],
+        "weekLabel": "Week 1: Variables & Data Types",
+        "topics": ["Variables", "Data Types", "Print Statement"],
+        "learningOutcomes": ["Declare variables", "Use basic data types"],
         "projects": [
           {
-            "id": "uuid-v4",
+            "id": "proj_week1_starter",
             "title": "Personal Info Card",
-            "description": "Build a CLI program...",
+            "description": "Build a CLI program that stores and displays your personal information.",
             "difficulty": "starter",
-            "skillsUsed": ["Variables", "Input/Output"],
-            "estimatedHours": 1,
-            "deliverable": "A Python script...",
-            "hints": ["Use input()...", "Use print()..."]
-          },
-          {
-            "id": "uuid-v4",
-            "title": "Simple Calculator",
-            "description": "Build a basic calculator...",
-            "difficulty": "stretch",
-            "skillsUsed": ["Variables", "Operators"],
+            "skillsUsed": ["Variables", "Input/Output", "String Formatting"],
             "estimatedHours": 2,
-            "deliverable": "A Python script...",
-            "hints": ["Convert strings to float...", "Use variables..."]
+            "deliverable": "A Python script that runs in the terminal",
+            "hints": ["Use input() to get user data", "Use print() to display it"]
           }
         ]
       }
@@ -308,14 +264,13 @@ curl -X POST http://localhost:3001/api/parse \
 }
 ```
 
-**Error Responses (400, 422, 500):**
+**Error Response (400/500):**
 ```json
 {
   "success": false,
   "error": {
-    "code": "INVALID_FILE_TYPE",
-    "message": "Only PDF and Word (.docx) files are accepted.",
-    "field": "file"
+    "code": "INVALID_INPUT",
+    "message": "Syllabus text must be at least 100 characters"
   }
 }
 ```
@@ -323,13 +278,13 @@ curl -X POST http://localhost:3001/api/parse \
 #### 2. Retrieve Roadmap
 **GET** `/api/roadmap/:id`
 
-Get a previously generated roadmap by session ID.
+Get a previously generated roadmap by ID (stored in session).
 
 **Response (200 OK):**
 ```json
 {
   "success": true,
-  "roadmap": { /* same structure as above */ }
+  "data": { /* roadmap object */ }
 }
 ```
 
@@ -340,7 +295,7 @@ Get a previously generated roadmap by session ID.
 ```json
 {
   "status": "ok",
-  "timestamp": "2026-05-06T10:30:00Z"
+  "message": "SyllabusAI backend is running"
 }
 ```
 
@@ -348,25 +303,12 @@ Get a previously generated roadmap by session ID.
 
 ## Environment Variables
 
-### Backend (`.env` / `.env.local`)
+### Backend (`.env.local`)
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `GOOGLE_API_KEY` | ✅ | - | Google Gemini API key (free tier) |
+| `GROQ_API_KEY` | ✅ | - | Groq API key (free at https://console.groq.com/) |
 | `PORT` | ❌ | 3001 | Server port |
-| `NODE_ENV` | ❌ | development | `development` or `production` |
-| `SESSION_SECRET` | ✅ | - | Min 32 characters for session signing |
-| `FRONTEND_URL` | ❌ | http://localhost:5173 | CORS origin (frontend URL) |
-| `MAX_FILE_SIZE_MB` | ❌ | 10 | Max upload size in MB |
-| `GEMINI_MODEL` | ❌ | gemini-1.5-pro | Gemini model version |
-| `GEMINI_MAX_TOKENS` | ❌ | 4096 | Max tokens in Gemini response |
-| `GEMINI_TEMPERATURE` | ❌ | 0.3 | Temperature for response consistency |
-
-### Frontend (`.env` / `.env.local`)
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `VITE_API_URL` | ❌ | http://localhost:3001 | Backend API base URL |
 
 ---
 
@@ -438,15 +380,14 @@ npm run test:e2e
 ### Issue: `Cannot find package 'express'`
 **Solution:** Install dependencies
 ```bash
-cd backend
 npm install
 ```
 
-### Issue: `GOOGLE_API_KEY is not defined`
+### Issue: `GROQ_API_KEY is not defined`
 **Solution:** Create `.env.local` and add your API key
 ```bash
 cp .env.example .env.local
-# Edit .env.local with your actual API key
+# Edit .env.local with your actual Groq API key from https://console.groq.com/
 ```
 
 ### Issue: `Port 3001 already in use`
@@ -459,17 +400,17 @@ lsof -ti:3001 | xargs kill -9
 ```
 
 ### Issue: `CORS error when calling backend from frontend`
-**Solution:** Ensure FRONTEND_URL matches your frontend URL
+**Solution:** Ensure frontend is running on `http://localhost:5173`
 ```bash
-# .env.local should have:
-FRONTEND_URL=http://localhost:5173
+cd frontend
+npm run dev  # This starts on port 5173 by default
 ```
 
 ### Issue: `File upload fails`
 **Solution:** Check file size and format
 - Ensure file is PDF or DOCX
-- File size must be under 10MB
-- Check `MAX_FILE_SIZE_MB` in `.env.local`
+- File content must be at least 100 characters
+- Check backend logs for specific error
 
 ---
 
@@ -497,10 +438,10 @@ FRONTEND_URL=http://localhost:5173
 ## Resources
 
 - [System Design Document](./docs/SYSTEM_DESIGN.md) — Complete architecture & specs
-- [Google Gemini API Docs](https://ai.google.dev/)
-- [React Documentation](https://react.dev)
+- [Groq API Documentation](https://console.groq.com/docs/)
 - [Express.js Guide](https://expressjs.com)
 - [Vite Docs](https://vitejs.dev)
+- [Tailwind CSS](https://tailwindcss.com)
 
 ---
 

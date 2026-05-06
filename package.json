@@ -1,0 +1,23 @@
+{
+  "name": "syllabusai-backend",
+  "version": "1.0.0",
+  "description": "Express backend for SyllabusAI with Groq API integration",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^5.0.0",
+    "cors": "^2.8.5",
+    "groq-sdk": "^0.3.2",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.6.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
