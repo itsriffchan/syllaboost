@@ -5,6 +5,9 @@ node_modules/
 dist/
 
 # Environment variables (NEVER commit these!)
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
 .env
 .env.local
 .env.*.local
