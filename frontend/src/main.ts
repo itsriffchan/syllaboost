@@ -60,7 +60,7 @@ function renderUploadPage() {
     <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div class="max-w-3xl w-full bg-white rounded-3xl shadow-xl p-8">
         <div class="text-center mb-8">
-          <h1 class="text-4xl font-bold text-slate-900 mb-3">SyllabusAI</h1>
+          <h1 class="text-4xl font-bold text-slate-900 mb-3">Syllaboost</h1>
           <p class="text-lg text-slate-600 mb-2">Upload your course syllabus and generate a weekly project roadmap.</p>
           <p class="text-slate-500">Supports PDF and DOCX files, or paste plain text directly.</p>
         </div>
