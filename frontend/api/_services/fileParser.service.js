@@ -5,26 +5,37 @@ import { ERROR_CODES } from '../_utils/constants.js';
 export const parsePDF = async (fileBuffer) => {
   try {
     logger.log('Parsing PDF file');
-    const { default: pdfParse } = await import('pdf-parse');
+    
+    if (!fileBuffer || fileBuffer.length === 0) {
+      throw new Error('File buffer is empty');
+    }
+    
+    logger.log(`Received buffer of size: ${fileBuffer.length} bytes`);
+    
+    const pdfParseModule = await import('pdf-parse');
+    const pdfParse = pdfParseModule.default || pdfParseModule;
+    
+    logger.log(`pdf-parse module loaded, type: ${typeof pdfParse}`);
     
     if (typeof pdfParse !== 'function') {
-      throw new Error('pdf-parse module did not export a function');
+      throw new Error(`pdf-parse is not a function, got: ${typeof pdfParse}`);
     }
 
     const pdfData = await pdfParse(fileBuffer);
+    logger.log(`PDF data: ${JSON.stringify({pages: pdfData.numpages, textLength: pdfData.text?.length})}`);
+    
     const text = pdfData.text || '';
     
-    logger.log(`PDF parsing result: ${text.length} characters extracted`);
-    
     if (!text || text.trim().length === 0) {
-      throw new Error('No text content extracted from PDF');
+      logger.warn('PDF parsed but contains no extractable text (may be image-based PDF)');
+      throw new Error('No text content extracted from PDF - file may be image-based');
     }
 
     logger.log(`PDF parsed successfully, extracted ${text.length} characters`);
     return text;
   } catch (error) {
-    logger.error('PDF parsing failed', error);
-    const err = new Error('Could not extract text from PDF file');
+    logger.error('PDF parsing failed', { message: error.message, stack: error.stack });
+    const err = new Error(`Could not extract text from PDF file: ${error.message}`);
     err.errorCode = ERROR_CODES.PARSE_FAILED;
     err.statusCode = 422;
     throw err;
