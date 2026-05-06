@@ -1,4 +1,5 @@
 import mammoth from 'mammoth';
+import * as pdfjsLib from 'pdfjs-dist';
 import { logger } from '../_utils/logger.js';
 import { ERROR_CODES } from '../_utils/constants.js';
 
@@ -12,27 +13,26 @@ export const parsePDF = async (fileBuffer) => {
     
     logger.log(`Received buffer of size: ${fileBuffer.length} bytes`);
     
-    const pdfParseModule = await import('pdf-parse');
-    const pdfParse = pdfParseModule.default || pdfParseModule;
+    const pdf = await pdfjsLib.getDocument({ data: fileBuffer }).promise;
+    logger.log(`PDF loaded with ${pdf.numPages} pages`);
     
-    logger.log(`pdf-parse module loaded, type: ${typeof pdfParse}`);
-    
-    if (typeof pdfParse !== 'function') {
-      throw new Error(`pdf-parse is not a function, got: ${typeof pdfParse}`);
+    let fullText = '';
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => item.str).join(' ');
+      fullText += pageText + '\n';
     }
-
-    const pdfData = await pdfParse(fileBuffer);
-    logger.log(`PDF data: ${JSON.stringify({pages: pdfData.numpages, textLength: pdfData.text?.length})}`);
     
-    const text = pdfData.text || '';
+    logger.log(`PDF text extraction result: ${fullText.length} characters`);
     
-    if (!text || text.trim().length === 0) {
+    if (!fullText || fullText.trim().length === 0) {
       logger.warn('PDF parsed but contains no extractable text (may be image-based PDF)');
       throw new Error('No text content extracted from PDF - file may be image-based');
     }
 
-    logger.log(`PDF parsed successfully, extracted ${text.length} characters`);
-    return text;
+    logger.log(`PDF parsed successfully, extracted ${fullText.length} characters`);
+    return fullText;
   } catch (error) {
     logger.error('PDF parsing failed', { message: error.message, stack: error.stack });
     const err = new Error(`Could not extract text from PDF file: ${error.message}`);
