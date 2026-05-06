@@ -13,7 +13,10 @@ export const parsePDF = async (fileBuffer) => {
     
     logger.log(`Received buffer of size: ${fileBuffer.length} bytes`);
     
-    const pdf = await pdfjsLib.getDocument({ data: fileBuffer }).promise;
+    // Convert Buffer to Uint8Array for pdfjs-dist compatibility
+    const uint8Array = new Uint8Array(fileBuffer);
+    
+    const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise;
     logger.log(`PDF loaded with ${pdf.numPages} pages`);
     
     let fullText = '';
