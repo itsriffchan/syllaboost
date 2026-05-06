@@ -34,7 +34,7 @@ interface Roadmap {
   weeks: WeekModule[]
 }
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
 const app = document.getElementById('app') as HTMLDivElement
 
 const state = {
@@ -204,22 +204,37 @@ function renderUploadPage() {
   renderUploadArea()
 }
 
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(',')[1]);
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+
 async function parseSyllabus(): Promise<Roadmap> {
-  const formData = new FormData()
+  const payload: Record<string, string> = {}
+
   if (state.selectedFile) {
-    formData.append('file', state.selectedFile)
+    payload.fileBase64 = await fileToBase64(state.selectedFile)
+    payload.mimeType = state.selectedFile.type || 'application/pdf'
+    payload.fileName = state.selectedFile.name
   }
   if (state.rawText) {
-    formData.append('rawText', state.rawText)
+    payload.rawText = state.rawText
   }
   if (state.courseTitle.trim()) {
-    formData.append('courseTitle', state.courseTitle.trim())
+    payload.courseTitle = state.courseTitle.trim()
   }
 
   const response = await fetch(`${apiBaseUrl}/api/parse`, {
     method: 'POST',
-    body: formData,
-    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
   })
 
   const result = await response.json()
@@ -228,7 +243,9 @@ async function parseSyllabus(): Promise<Roadmap> {
     throw new Error(error?.message || 'Failed to generate roadmap')
   }
 
-  return result.data as Roadmap
+  const roadmap = result.data as Roadmap
+  localStorage.setItem(`roadmap_${roadmap.id}`, JSON.stringify(roadmap))
+  return roadmap
 }
 
 function renderRoadmapPage(id: string) {
@@ -278,15 +295,11 @@ function renderRoadmapPage(id: string) {
 }
 
 async function fetchRoadmap(id: string): Promise<Roadmap> {
-  const response = await fetch(`${apiBaseUrl}/api/roadmap/${encodeURIComponent(id)}`, {
-    credentials: 'include'
-  })
-  const result = await response.json()
-  if (!response.ok || result.success === false) {
-    const error = result.error as ApiError | undefined
-    throw new Error(error?.message || 'Failed to load roadmap')
+  const stored = localStorage.getItem(`roadmap_${id}`)
+  if (stored) {
+    return JSON.parse(stored) as Roadmap
   }
-  return result.data as Roadmap
+  throw new Error('Roadmap not found. It may have expired or you are on a different device.')
 }
 
 function showRoadmap(roadmap: Roadmap) {
