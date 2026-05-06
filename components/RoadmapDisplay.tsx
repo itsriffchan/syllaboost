@@ -17,6 +17,15 @@ interface Week {
   estimatedHoursPerWeek: number;
 }
 
+interface Recommendation {
+  type: 'guide' | 'certification' | 'course' | 'step-by-step';
+  title: string;
+  description: string;
+  provider: string;
+  url: string;
+  steps?: string[];
+}
+
 interface RoadmapDisplayProps {
   roadmap: {
     courseName: string;
@@ -24,7 +33,7 @@ interface RoadmapDisplayProps {
     totalWeeks: number;
     weeks: Week[];
     overallSummary: string;
-    recommendations: string[];
+    recommendations: Recommendation[];
   };
 }
 
