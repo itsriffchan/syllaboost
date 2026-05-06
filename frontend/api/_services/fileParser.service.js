@@ -3,6 +3,9 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { logger } from '../_utils/logger.js';
 import { ERROR_CODES } from '../_utils/constants.js';
 
+// Set worker to use CDN for serverless compatibility
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
+
 export const parsePDF = async (fileBuffer) => {
   try {
     logger.log('Parsing PDF file');
