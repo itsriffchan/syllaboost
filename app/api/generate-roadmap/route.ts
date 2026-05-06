@@ -22,7 +22,7 @@ async function callGroq(prompt: string) {
 }
 
 async function callGemini(prompt: string) {
-  const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
   const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
   const model = genAI.getGenerativeModel({ model: modelName });
 
@@ -110,11 +110,6 @@ Ensure the recommendations are highly structured, providing actual step-by-step 
       console.log('Groq API success');
     } catch (groqError: any) {
       groqErrorDetail = groqError.message || String(groqError);
-      if (groqError.status === 429) {
-        groqErrorDetail = 'Groq API rate limit exceeded';
-      } else if (groqError.status === 401) {
-        groqErrorDetail = 'Invalid Groq API key';
-      }
       
       console.error('Groq API failed:', groqErrorDetail);
       
@@ -137,7 +132,7 @@ Ensure the recommendations are highly structured, providing actual step-by-step 
         return NextResponse.json(
           { 
             error: 'AI Services Unavailable',
-            details: `Groq: ${groqErrorDetail.substring(0, 100)}. Gemini: ${geminiErrorDetail.substring(0, 100)}.`,
+            details: `Groq: ${groqErrorDetail.substring(0, 500)}. Gemini: ${geminiErrorDetail.substring(0, 500)}.`,
             groqError: groqErrorDetail,
             geminiError: geminiErrorDetail
           },
