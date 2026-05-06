@@ -72,21 +72,59 @@ export default function RoadmapDisplay({ roadmap }: RoadmapDisplayProps) {
 
       {/* Recommendations */}
       {roadmap.recommendations && roadmap.recommendations.length > 0 && (
-        <div className='bg-blue-900/20 border border-blue-500/30 rounded-lg p-4'>
-          <h3 className='text-lg font-semibold text-blue-300 mb-3'>
-            💡 Recommendations
+        <div className='space-y-4'>
+          <h3 className='text-2xl font-bold text-white flex items-center gap-2'>
+            <span className='text-blue-400'>💡</span> Recommended Learning Paths
           </h3>
-          <ul className='space-y-2'>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             {roadmap.recommendations.map((rec, idx) => (
-              <li
+              <div
                 key={idx}
-                className='text-blue-200 flex items-start gap-2'
+                className='bg-blue-900/20 border border-blue-500/30 rounded-xl p-5 hover:border-blue-400/50 transition-all group'
               >
-                <span className='mt-1'>•</span>
-                <span>{rec}</span>
-              </li>
+                <div className='flex justify-between items-start mb-3'>
+                  <span className='text-xs font-bold uppercase tracking-wider px-2 py-1 bg-blue-500/20 text-blue-300 rounded'>
+                    {rec.type}
+                  </span>
+                  <span className='text-xs text-blue-400/70 font-medium'>
+                    {rec.provider}
+                  </span>
+                </div>
+                <h4 className='text-xl font-bold text-white mb-2 group-hover:text-blue-300 transition-colors'>
+                  {rec.title}
+                </h4>
+                <p className='text-blue-200/80 text-sm mb-4 line-clamp-2'>
+                  {rec.description}
+                </p>
+                
+                {rec.steps && rec.steps.length > 0 && (
+                  <div className='mb-4 space-y-2'>
+                    <p className='text-xs font-bold text-blue-400 uppercase tracking-tight'>Step-by-step Guide:</p>
+                    <ul className='space-y-1.5'>
+                      {rec.steps.map((step, sIdx) => (
+                        <li key={sIdx} className='text-sm text-blue-100/90 flex gap-2'>
+                          <span className='text-blue-500 font-bold'>{sIdx + 1}.</span>
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <a
+                  href={rec.url}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='inline-flex items-center text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors'
+                >
+                  View Resource
+                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </a>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
 

@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Syllabus AI",
+  title: "Syllaboost",
   description: "by ACERS",
 };
 

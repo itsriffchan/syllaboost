@@ -24,7 +24,14 @@ interface Roadmap {
     estimatedHoursPerWeek: number;
   }>;
   overallSummary: string;
-  recommendations: string[];
+  recommendations: Array<{
+    type: 'guide' | 'certification' | 'course' | 'step-by-step';
+    title: string;
+    description: string;
+    provider: string;
+    url: string;
+    steps?: string[];
+  }>;
 }
 
 export default function Home() {
@@ -70,7 +77,7 @@ export default function Home() {
         {/* Header */}
         <div className='text-center mb-12'>
           <h1 className='text-5xl font-bold text-white mb-4'>
-            Syllabus AI
+            Syllaboost
           </h1>
           <p className='text-xl text-purple-300 max-w-2xl mx-auto'>
             Transform your course syllabus into a personalized learning roadmap.
@@ -96,19 +103,26 @@ export default function Home() {
             {loading && <LoadingSpinner />}
 
             {error && (
-              <div className='bg-red-900/20 border border-red-500 rounded-lg p-4 mb-4'>
-                <p className='text-red-200 font-semibold mb-2'>Error</p>
-                <p className='text-red-300 text-sm'>{error}</p>
-                {error.includes('API') && (
-                  <p className='text-red-400 text-xs mt-2'>
-                    💡 Tip: Make sure your Groq API key is valid and has available credits.
-                  </p>
-                )}
-                {error.includes('syllabus') && (
-                  <p className='text-red-400 text-xs mt-2'>
-                    💡 Tip: Try pasting the syllabus text directly instead of uploading a file.
-                  </p>
-                )}
+              <div className='bg-red-900/20 border border-red-500 rounded-lg p-4 mb-4 animate-in fade-in duration-300'>
+                <div className='flex items-start gap-3'>
+                  <span className='text-xl'>⚠️</span>
+                  <div className='flex-1'>
+                    <p className='text-red-200 font-bold mb-1'>Generation Failed</p>
+                    <p className='text-red-300 text-sm leading-relaxed mb-3'>{error}</p>
+                    <div className='flex flex-wrap gap-2'>
+                      {error.includes('rate limit') && (
+                        <span className='bg-red-500/20 text-red-300 text-[10px] px-2 py-0.5 rounded border border-red-500/30 uppercase font-bold'>
+                          Rate Limited
+                        </span>
+                      )}
+                      {error.includes('API key') && (
+                        <span className='bg-red-500/20 text-red-300 text-[10px] px-2 py-0.5 rounded border border-red-500/30 uppercase font-bold'>
+                          Config Issue
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
