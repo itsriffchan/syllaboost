@@ -219,6 +219,7 @@ async function parseSyllabus(): Promise<Roadmap> {
   const response = await fetch(`${apiBaseUrl}/api/parse`, {
     method: 'POST',
     body: formData,
+    credentials: 'include',
   })
 
   const result = await response.json()
@@ -277,7 +278,9 @@ function renderRoadmapPage(id: string) {
 }
 
 async function fetchRoadmap(id: string): Promise<Roadmap> {
-  const response = await fetch(`${apiBaseUrl}/api/roadmap/${encodeURIComponent(id)}`)
+  const response = await fetch(`${apiBaseUrl}/api/roadmap/${encodeURIComponent(id)}`, {
+    credentials: 'include'
+  })
   const result = await response.json()
   if (!response.ok || result.success === false) {
     const error = result.error as ApiError | undefined
