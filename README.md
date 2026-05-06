@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # SyllabusAI 🎓
-=======
-# Syllaboost🎓
->>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
 
 **Syllabus-to-Weekly-Roadmap Web Application**
 
@@ -29,10 +25,7 @@ Transform course syllabi into personalized weekly project roadmaps. Students upl
 
 ## Project Overview
 
-<<<<<<< HEAD
 SyllabusAI bridges the gap between passive learning and active building by:
-=======
-Syllaboost bridges the gap between passive learning and active building by:
 >>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
 
 - 📤 **Upload** course syllabi (PDF, DOCX, or plain text)
