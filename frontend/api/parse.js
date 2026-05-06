@@ -21,7 +21,6 @@ export default async function handler(req, res) {
 
   try {
     logger.log('POST /api/parse - serverless handler');
-
     const { fileBase64, mimeType, fileName, rawText, courseTitle, totalWeeks } = req.body;
 
     let extractedText = rawText;
@@ -39,7 +38,6 @@ export default async function handler(req, res) {
         error: { code: 'MISSING_INPUT', message: 'Please provide a file or syllabus text.' }
       });
     }
-
     const detectedCourseTitle = courseTitle || 'Course';
     const detectedTotalWeeks = totalWeeks ? parseInt(totalWeeks) : 8;
 

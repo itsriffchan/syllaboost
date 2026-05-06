@@ -1,11 +1,16 @@
-import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import mammoth from 'mammoth';
 import { logger } from '../_utils/logger.js';
 import { ERROR_CODES } from '../_utils/constants.js';
 
+const loadPdfParse = async () => {
+  const module = await import('pdf-parse');
+  return module.default || module.pdfParse || module;
+};
+
 export const parsePDF = async (fileBuffer) => {
   try {
     logger.log('Parsing PDF file');
+    const pdfParse = await loadPdfParse();
     const pdfData = await pdfParse(fileBuffer);
     const text = pdfData.text;
     if (!text || text.trim().length === 0) {

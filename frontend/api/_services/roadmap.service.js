@@ -5,7 +5,6 @@ export const assembleRoadmap = (validatedData) => {
   logger.log('Assembling final roadmap object');
   const roadmapId = uuidv4();
   const generatedAt = new Date().toISOString();
-
   const weeksWithIds = validatedData.weeks.map((week) => ({
     ...week,
     projects: week.projects.map((project) => ({
