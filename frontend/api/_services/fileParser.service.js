@@ -1,5 +1,5 @@
 import mammoth from 'mammoth';
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
 import { logger } from '../_utils/logger.js';
 import { ERROR_CODES } from '../_utils/constants.js';
 
@@ -16,11 +16,7 @@ export const parsePDF = async (fileBuffer) => {
     // Convert Buffer to Uint8Array for pdfjs-dist compatibility
     const uint8Array = new Uint8Array(fileBuffer);
     
-    // Disable worker for serverless/Node.js environment
-    const pdf = await pdfjsLib.getDocument({ 
-      data: uint8Array,
-      disableWorker: true 
-    }).promise;
+    const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise;
     logger.log(`PDF loaded with ${pdf.numPages} pages`);
     
     let fullText = '';
