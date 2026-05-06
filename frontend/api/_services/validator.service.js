@@ -1,10 +1,15 @@
 import { z } from 'zod';
+<<<<<<< HEAD
 import { logger } from '../utils/logger.js';
 import { ERROR_CODES, LIMITS } from '../utils/constants.js';
 
 /**
  * Zod schemas for runtime validation of roadmap data
  */
+=======
+import { logger } from '../_utils/logger.js';
+import { ERROR_CODES, LIMITS } from '../_utils/constants.js';
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
 
 const ProjectSchema = z.object({
   title: z.string().min(1).max(100),
@@ -30,12 +35,15 @@ const RoadmapResponseSchema = z.object({
   weeks: z.array(WeekModuleSchema).min(1),
 });
 
+<<<<<<< HEAD
 /**
  * Validate raw Gemini response JSON
  * @param {Object} data - Parsed JSON from Gemini API
  * @returns {Object} - Validated roadmap data
  * @throws {Object} - Error object with errorCode
  */
+=======
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
 export const validateRoadmapJSON = (data) => {
   try {
     logger.log('Validating roadmap JSON structure');
@@ -50,6 +58,7 @@ export const validateRoadmapJSON = (data) => {
     throw err;
   }
 };
+<<<<<<< HEAD
 
 /**
  * Validate entire Roadmap object (including backend-added fields)
@@ -76,3 +85,5 @@ export const validateCompleteRoadmap = (roadmap) => {
     throw err;
   }
 };
+=======
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b

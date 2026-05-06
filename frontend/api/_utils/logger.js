@@ -1,7 +1,10 @@
+<<<<<<< HEAD
 /**
  * Logger utility for console logging
  * Add timestamps and structured output
  */
+=======
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
 export const logger = {
   log: (message, data = null) => {
     const timestamp = new Date().toISOString();

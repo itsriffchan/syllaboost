@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+<<<<<<< HEAD
 import { logger } from '../utils/logger.js';
 
 /**
@@ -19,6 +20,15 @@ export const assembleRoadmap = (validatedData) => {
   const generatedAt = new Date().toISOString();
 
   // Add UUIDs to all projects
+=======
+import { logger } from '../_utils/logger.js';
+
+export const assembleRoadmap = (validatedData) => {
+  logger.log('Assembling final roadmap object');
+  const roadmapId = uuidv4();
+  const generatedAt = new Date().toISOString();
+
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
   const weeksWithIds = validatedData.weeks.map((week) => ({
     ...week,
     projects: week.projects.map((project) => ({
@@ -38,6 +48,7 @@ export const assembleRoadmap = (validatedData) => {
   logger.log(`Roadmap assembled with ID: ${roadmapId}`);
   return roadmap;
 };
+<<<<<<< HEAD
 
 /**
  * Store roadmap in session
@@ -66,3 +77,5 @@ export const retrieveFromSession = (session, roadmapId) => {
   logger.log(`Roadmap retrieved from session: ${roadmapId}`);
   return session.roadmaps[roadmapId];
 };
+=======
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
