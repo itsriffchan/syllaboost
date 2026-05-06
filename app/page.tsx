@@ -70,7 +70,7 @@ export default function Home() {
         {/* Header */}
         <div className='text-center mb-12'>
           <h1 className='text-5xl font-bold text-white mb-4'>
-            Course Roadmap Generator
+            Syllabus AI
           </h1>
           <p className='text-xl text-purple-300 max-w-2xl mx-auto'>
             Transform your course syllabus into a personalized learning roadmap.
