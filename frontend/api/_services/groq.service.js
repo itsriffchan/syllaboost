@@ -1,4 +1,5 @@
 import Groq from 'groq-sdk';
+<<<<<<< HEAD
 import { logger } from '../utils/logger.js';
 import { ERROR_CODES } from '../utils/constants.js';
 
@@ -6,6 +7,10 @@ import { ERROR_CODES } from '../utils/constants.js';
  * Groq API service
  * Handles all communication with Groq API for Llama 3
  */
+=======
+import { logger } from '../_utils/logger.js';
+import { ERROR_CODES } from '../_utils/constants.js';
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
 
 const getClient = () => new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -48,6 +53,7 @@ Return a JSON object that matches this exact structure:
 }
 `;
 
+<<<<<<< HEAD
 /**
  * Build the user prompt for Groq
  * @param {string} courseTitle - Course title
@@ -55,6 +61,8 @@ Return a JSON object that matches this exact structure:
  * @param {string} rawText - Full syllabus text
  * @returns {string} - Formatted user prompt
  */
+=======
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
 const buildUserPrompt = (courseTitle, totalWeeks, rawText) => {
   return `Analyze this course syllabus and generate a weekly project roadmap.
 Course Title: ${courseTitle}
@@ -66,6 +74,7 @@ ${rawText}
 ${JSON_SCHEMA}`;
 };
 
+<<<<<<< HEAD
 /**
  * Call Groq API to parse syllabus and generate roadmap
  * @param {string} courseTitle - Course title
@@ -73,15 +82,22 @@ ${JSON_SCHEMA}`;
  * @param {string} rawText - Extracted syllabus text
  * @returns {Promise<Object>} - Parsed roadmap JSON from Groq
  */
+=======
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
 export const parseWithGroq = async (courseTitle, totalWeeks, rawText) => {
   const maxRetries = 3;
   const baseDelay = 2000;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
+<<<<<<< HEAD
       logger.log(`Calling Groq API for syllabus parsing (Attempt ${attempt}/${maxRetries})`);
 
       const modelName = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+=======
+      logger.log(`Calling Groq API (Attempt ${attempt}/${maxRetries})`);
+      const modelName = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
       const groq = getClient();
       const userPrompt = buildUserPrompt(courseTitle, totalWeeks, rawText);
 
@@ -111,6 +127,7 @@ export const parseWithGroq = async (courseTitle, totalWeeks, rawText) => {
 
       return parsedResponse;
     } catch (error) {
+<<<<<<< HEAD
       if (error.errorCode === ERROR_CODES.AI_PARSE_FAILED) {
         throw error;
       }
@@ -123,10 +140,19 @@ export const parseWithGroq = async (courseTitle, totalWeeks, rawText) => {
       if (isTemporaryError && attempt < maxRetries) {
         const delay = baseDelay * attempt;
         logger.warn(`Groq API temporarily unavailable (${error.status}). Retrying in ${delay}ms...`);
+=======
+      if (error.errorCode === ERROR_CODES.AI_PARSE_FAILED) throw error;
+
+      const isTemporaryError = error.status === 429 || error.status === 503 || error.message?.includes('fetch failed');
+      if (isTemporaryError && attempt < maxRetries) {
+        const delay = baseDelay * attempt;
+        logger.warn(`Groq API temporarily unavailable. Retrying in ${delay}ms...`);
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
 
+<<<<<<< HEAD
       logger.error('Groq API call failed - Details:', {
         message: error.message,
         status: error.status,
@@ -134,6 +160,9 @@ export const parseWithGroq = async (courseTitle, totalWeeks, rawText) => {
         attempt
       });
 
+=======
+      logger.error('Groq API call failed', { message: error.message, status: error.status, attempt });
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
       const err = new Error(`Failed to call Groq API: ${error.message}`);
       err.errorCode = ERROR_CODES.AI_API_ERROR;
       err.statusCode = 500;

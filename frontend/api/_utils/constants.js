@@ -1,8 +1,11 @@
+<<<<<<< HEAD
 /**
  * Shared constants for the backend
  * Error codes, limits, messages, etc.
  */
 
+=======
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
 export const ERROR_CODES = {
   MISSING_INPUT: 'MISSING_INPUT',
   INVALID_FILE_TYPE: 'INVALID_FILE_TYPE',
@@ -15,6 +18,7 @@ export const ERROR_CODES = {
   RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
 };
 
+<<<<<<< HEAD
 export const ERROR_MESSAGES = {
   MISSING_INPUT: 'Please upload a file or paste your syllabus text.',
   INVALID_FILE_TYPE: 'Only PDF and Word (.docx) files are accepted.',
@@ -42,4 +46,12 @@ export const HTTP_STATUS = {
   BAD_REQUEST: 400,
   UNPROCESSABLE_ENTITY: 422,
   INTERNAL_SERVER_ERROR: 500,
+=======
+export const LIMITS = {
+  MAX_FILE_SIZE_MB: 10,
+  MIN_TEXT_LENGTH: 100,
+  MAX_WEEKS: 52,
+  MIN_WEEKS: 1,
+  PROJECTS_PER_WEEK: 2,
+>>>>>>> d0429953a4f8fa2abe29c23f912647d6ead7797b
 };
