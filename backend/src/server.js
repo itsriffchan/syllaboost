@@ -1,3 +1,15 @@
+import { config } from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env.local first (takes precedence), then .env
+config({ path: path.resolve(__dirname, '../.env.local') });
+config({ path: path.resolve(__dirname, '../.env') });
+
 import app from './app.js';
 import { logger } from './utils/logger.js';
 

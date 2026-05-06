@@ -4,10 +4,6 @@ import session from 'express-session';
 import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { config } from 'dotenv';
-
-// Load environment variables
-config();
 
 // ES module dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -36,8 +32,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Middleware: Session management
+const sessionSecret = process.env.SESSION_SECRET || 'dev-fallback-secret-change-in-production-min-32-chars-long';
+
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -67,6 +65,18 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.get('/', (req, res) => {
+  res.json({
+    message: 'SyllabusAI Backend API',
+    version: '1.0.0',
+    endpoints: {
+      health: 'GET /api/health',
+      parse: 'POST /api/parse',
+      roadmap: 'GET /api/roadmap/:id',
+    },
+  });
+});
+
 app.use('/api/health', healthRoute);
 app.use('/api/roadmap', roadmapRoute);
 app.use('/api/parse', parseRateLimiter, parseRoute);
