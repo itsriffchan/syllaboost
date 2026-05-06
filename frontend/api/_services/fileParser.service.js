@@ -2,17 +2,20 @@ import mammoth from 'mammoth';
 import { logger } from '../_utils/logger.js';
 import { ERROR_CODES } from '../_utils/constants.js';
 
-const loadPdfParse = async () => {
-  const module = await import('pdf-parse');
-  return module.default || module.pdfParse || module;
-};
-
 export const parsePDF = async (fileBuffer) => {
   try {
     logger.log('Parsing PDF file');
-    const pdfParse = await loadPdfParse();
+    const { default: pdfParse } = await import('pdf-parse');
+    
+    if (typeof pdfParse !== 'function') {
+      throw new Error('pdf-parse module did not export a function');
+    }
+
     const pdfData = await pdfParse(fileBuffer);
-    const text = pdfData.text;
+    const text = pdfData.text || '';
+    
+    logger.log(`PDF parsing result: ${text.length} characters extracted`);
+    
     if (!text || text.trim().length === 0) {
       throw new Error('No text content extracted from PDF');
     }
