@@ -1,4 +1,4 @@
-# SyllabusAI 🎓
+# Syllaboost🎓
 
 **Syllabus-to-Weekly-Roadmap Web Application**
 
@@ -25,7 +25,7 @@ Transform course syllabi into personalized weekly project roadmaps. Students upl
 
 ## Project Overview
 
-SyllabusAI bridges the gap between passive learning and active building by:
+Syllaboost bridges the gap between passive learning and active building by:
 
 - 📤 **Upload** course syllabi (PDF, DOCX, or plain text)
 - 🤖 **Parse** syllabus content using Google Gemini AI
