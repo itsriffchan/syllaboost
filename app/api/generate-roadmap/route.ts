@@ -1,12 +1,13 @@
 import { Groq } from 'groq-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
 
 export async function POST(request: NextRequest) {
   try {
+    const groq = new Groq({
+      apiKey: process.env.GROQ_API_KEY,
+    });
+
     const { syllabus, skillLevel } = await request.json();
 
     if (!syllabus || !skillLevel) {
