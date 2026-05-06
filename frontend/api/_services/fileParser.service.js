@@ -1,4 +1,4 @@
-import pdfParse from 'pdf-parse/lib/pdf-parse.js';
+import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import { logger } from '../_utils/logger.js';
 import { ERROR_CODES } from '../_utils/constants.js';
