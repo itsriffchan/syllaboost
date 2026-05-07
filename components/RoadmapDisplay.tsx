@@ -40,13 +40,13 @@ interface RoadmapDisplayProps {
 const getDifficultyColor = (difficulty: string) => {
   switch (difficulty) {
     case 'easy':
-      return 'bg-green-900/30 border-green-500/30 text-green-300';
+      return 'bg-green-50 border-green-200 text-green-700';
     case 'medium':
-      return 'bg-yellow-900/30 border-yellow-500/30 text-yellow-300';
+      return 'bg-amber-50 border-amber-200 text-amber-700';
     case 'hard':
-      return 'bg-red-900/30 border-red-500/30 text-red-300';
+      return 'bg-rose-50 border-rose-200 text-rose-700';
     default:
-      return 'bg-slate-700/30 border-slate-500/30 text-slate-300';
+      return 'bg-slate-50 border-slate-200 text-slate-700';
   }
 };
 
@@ -66,54 +66,73 @@ export default function RoadmapDisplay({ roadmap }: RoadmapDisplayProps) {
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-10'>
       {/* Header */}
-      <div className='bg-gradient-to-r from-purple-900/40 to-slate-900/40 border border-purple-500/30 rounded-lg p-6'>
-        <h2 className='text-3xl font-bold text-white mb-2'>
-          {roadmap.courseName}
-        </h2>
-        <p className='text-purple-300 mb-4 capitalize'>
-          Skill Level: <span className='font-semibold'>{roadmap.skillLevel}</span> • Total Weeks:{' '}
-          <span className='font-semibold'>{roadmap.totalWeeks}</span>
-        </p>
-        <p className='text-slate-300'>{roadmap.overallSummary}</p>
+      <div className='relative'>
+        <div className="absolute -top-12 -left-6 text-8xl font-black text-purple-600/5 select-none pointer-events-none uppercase">
+          Roadmap
+        </div>
+        <div className='bg-white/80 backdrop-blur-xl border border-white rounded-[40px] p-10 shadow-2xl shadow-purple-200/40 relative overflow-hidden'>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-100/50 rounded-bl-[100px] -mr-8 -mt-8"></div>
+          <div className="flex items-center gap-4 mb-4">
+            <span className="bg-purple-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+              Generated Path
+            </span>
+            <div className="h-px flex-1 bg-purple-100"></div>
+          </div>
+          <h2 className='text-5xl font-black text-[#2d1b4e] mb-4 leading-tight'>
+            {roadmap.courseName}
+          </h2>
+          <div className="flex flex-wrap gap-4 items-center text-sm font-bold">
+            <span className='bg-purple-50 text-purple-600 px-4 py-2 rounded-2xl border border-purple-100 capitalize'>
+              🎯 {roadmap.skillLevel}
+            </span>
+            <span className='bg-indigo-50 text-indigo-600 px-4 py-2 rounded-2xl border border-indigo-100'>
+              ⏳ {roadmap.totalWeeks} Weeks
+            </span>
+          </div>
+          <p className='mt-6 text-slate-500 leading-relaxed text-lg italic'>"{roadmap.overallSummary}"</p>
+        </div>
       </div>
 
       {/* Recommendations */}
       {roadmap.recommendations && roadmap.recommendations.length > 0 && (
-        <div className='space-y-4'>
-          <h3 className='text-2xl font-bold text-white flex items-center gap-2'>
-            <span className='text-blue-400'>💡</span> Recommended Learning Paths
-          </h3>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <div className='space-y-6'>
+          <div className="flex items-center gap-4">
+            <h3 className='text-3xl font-black text-[#2d1b4e] uppercase tracking-tighter'>
+              Expert Recommendations
+            </h3>
+            <div className="h-1 w-24 bg-purple-600 rounded-full"></div>
+          </div>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
             {roadmap.recommendations.map((rec, idx) => (
               <div
                 key={idx}
-                className='bg-blue-900/20 border border-blue-500/30 rounded-xl p-5 hover:border-blue-400/50 transition-all group'
+                className='bg-white border-2 border-slate-50 rounded-[32px] p-6 hover:border-purple-200 transition-all group shadow-xl shadow-slate-200/50 relative overflow-hidden'
               >
-                <div className='flex justify-between items-start mb-3'>
-                  <span className='text-xs font-bold uppercase tracking-wider px-2 py-1 bg-blue-500/20 text-blue-300 rounded'>
+                <div className='flex justify-between items-start mb-4'>
+                  <span className='text-[10px] font-black uppercase tracking-widest px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full border border-blue-100'>
                     {rec.type}
                   </span>
-                  <span className='text-xs text-blue-400/70 font-medium'>
+                  <span className='text-xs text-slate-600 font-bold'>
                     {rec.provider}
                   </span>
                 </div>
-                <h4 className='text-xl font-bold text-white mb-2 group-hover:text-blue-300 transition-colors'>
+                <h4 className='text-xl font-black text-[#2d1b4e] mb-3 group-hover:text-purple-600 transition-colors'>
                   {rec.title}
                 </h4>
-                <p className='text-blue-200/80 text-sm mb-4 line-clamp-2'>
+                <p className='text-slate-500 text-sm mb-6 leading-relaxed'>
                   {rec.description}
                 </p>
                 
                 {rec.steps && rec.steps.length > 0 && (
-                  <div className='mb-4 space-y-2'>
-                    <p className='text-xs font-bold text-blue-400 uppercase tracking-tight'>Step-by-step Guide:</p>
-                    <ul className='space-y-1.5'>
+                  <div className='mb-6 bg-slate-50 rounded-2xl p-4'>
+                    <p className='text-[10px] font-black text-slate-600 uppercase tracking-widest mb-3'>Action Plan:</p>
+                    <ul className='space-y-2.5'>
                       {rec.steps.map((step, sIdx) => (
-                        <li key={sIdx} className='text-sm text-blue-100/90 flex gap-2'>
-                          <span className='text-blue-500 font-bold'>{sIdx + 1}.</span>
-                          <span>{step}</span>
+                        <li key={sIdx} className='text-xs text-slate-600 flex gap-3 font-bold'>
+                          <span className='w-5 h-5 rounded-full bg-white flex items-center justify-center text-[10px] text-purple-600 border border-purple-100 flex-shrink-0'>{sIdx + 1}</span>
+                          <span className="leading-tight">{step}</span>
                         </li>
                       ))}
                     </ul>
@@ -124,11 +143,11 @@ export default function RoadmapDisplay({ roadmap }: RoadmapDisplayProps) {
                   href={rec.url}
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='inline-flex items-center text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors'
+                  className='w-full inline-flex items-center justify-center py-3 bg-slate-900 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-purple-600 transition-colors gap-2'
                 >
-                  View Resource
-                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  Explore Resource
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
                 </a>
               </div>
@@ -138,60 +157,76 @@ export default function RoadmapDisplay({ roadmap }: RoadmapDisplayProps) {
       )}
 
       {/* Weeks */}
-      <div className='space-y-3'>
+      <div className='space-y-4'>
+        <div className="flex items-center gap-4 mb-6">
+          <h3 className='text-3xl font-black text-[#2d1b4e] uppercase tracking-tighter'>
+            Curriculum Timeline
+          </h3>
+          <div className="h-1 flex-1 bg-slate-100 rounded-full"></div>
+        </div>
+        
         {roadmap.weeks.map((week) => (
           <div
             key={week.week}
-            className='bg-slate-800/30 border border-slate-700 rounded-lg overflow-hidden hover:border-purple-500/50 transition'
+            className={`bg-white border-2 transition-all duration-500 ${
+              expandedWeeks.has(week.week - 1) 
+                ? 'border-purple-200 rounded-[32px] shadow-2xl shadow-purple-100/50' 
+                : 'border-slate-50 rounded-2xl hover:border-purple-100'
+            } overflow-hidden`}
           >
             {/* Week Header */}
             <button
               onClick={() => toggleWeek(week.week - 1)}
-              className='w-full px-6 py-4 flex items-center justify-between hover:bg-slate-700/20 transition text-left'
+              className='w-full px-8 py-6 flex items-center justify-between hover:bg-slate-50/50 transition text-left'
             >
-              <div className='flex items-center gap-4 flex-1'>
-                <div className='flex-shrink-0 w-12 h-12 bg-purple-600/30 border border-purple-500/50 rounded-lg flex items-center justify-center'>
-                  <span className='text-white font-bold'>W{week.week}</span>
+              <div className='flex items-center gap-6 flex-1'>
+                <div className={`flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
+                  expandedWeeks.has(week.week - 1) ? 'bg-purple-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'
+                }`}>
+                  <span className='text-xl font-black'>W{week.week}</span>
                 </div>
                 <div>
-                  <h3 className='text-lg font-semibold text-white'>
-                    Week {week.week}: {week.title}
+                  <h3 className={`text-xl font-black transition-colors ${
+                    expandedWeeks.has(week.week - 1) ? 'text-[#2d1b4e]' : 'text-slate-500'
+                  }`}>
+                    {week.title}
                   </h3>
-                  <p className='text-sm text-slate-400'>
-                    {week.estimatedHoursPerWeek} hours/week
-                  </p>
+                  <div className="flex items-center gap-4 mt-1">
+                    <span className='text-xs font-bold text-slate-600 uppercase tracking-widest'>
+                      ⏱️ {week.estimatedHoursPerWeek} hours
+                    </span>
+                    <div className="flex gap-1">
+                      {week.concepts.slice(0, 3).map((_, i) => (
+                        <div key={i} className="w-1.5 h-1.5 rounded-full bg-purple-200"></div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <svg
-                className={`w-6 h-6 text-purple-400 transition transform ${
-                  expandedWeeks.has(week.week - 1) ? 'rotate-180' : ''
-                }`}
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M19 14l-7 7m0 0l-7-7m7 7V3'
-                />
-              </svg>
+              <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${
+                expandedWeeks.has(week.week - 1) ? 'border-purple-600 bg-purple-50 rotate-180' : 'border-slate-100'
+              }`}>
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </button>
 
             {/* Week Content */}
             {expandedWeeks.has(week.week - 1) && (
-              <div className='px-6 pb-6 space-y-4 border-t border-slate-700 pt-4'>
+              <div className='px-8 pb-8 space-y-8 animate-in slide-in-from-top-4 duration-500'>
+                <div className="h-px w-full bg-slate-50"></div>
+                
                 {/* Concepts */}
                 <div>
-                  <h4 className='text-sm font-semibold text-purple-300 mb-2 uppercase tracking-wide'>
-                    📚 Key Concepts
+                  <h4 className='text-[10px] font-black text-purple-600 mb-4 uppercase tracking-[0.2em]'>
+                    Core Concepts
                   </h4>
-                  <div className='flex flex-wrap gap-2'>
+                  <div className='flex flex-wrap gap-3'>
                     {week.concepts.map((concept, idx) => (
                       <span
                         key={idx}
-                        className='bg-purple-900/30 border border-purple-500/30 text-purple-200 px-3 py-1 rounded-full text-sm'
+                        className='bg-white border-2 border-slate-50 text-[#2d1b4e] px-4 py-2 rounded-xl text-xs font-bold shadow-sm'
                       >
                         {concept}
                       </span>
@@ -199,77 +234,76 @@ export default function RoadmapDisplay({ roadmap }: RoadmapDisplayProps) {
                   </div>
                 </div>
 
-                {/* Projects */}
-                {week.projects && week.projects.length > 0 && (
-                  <div>
-                    <h4 className='text-sm font-semibold text-blue-300 mb-2 uppercase tracking-wide'>
-                      🚀 Projects
-                    </h4>
-                    <div className='space-y-2'>
-                      {week.projects.map((project, idx) => (
-                        <div
-                          key={idx}
-                          className={`border rounded-lg p-3 ${getDifficultyColor(
-                            project.difficulty
-                          )}`}
-                        >
-                          <div className='flex items-start justify-between mb-1'>
-                            <h5 className='font-medium'>{project.name}</h5>
-                            <span className='text-xs font-semibold capitalize px-2 py-1 bg-black/30 rounded'>
-                              {project.difficulty}
-                            </span>
+                {/* Grid for Projects & Resources */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Projects */}
+                  {week.projects && week.projects.length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className='text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]'>
+                        Milestone Projects
+                      </h4>
+                      <div className='space-y-3'>
+                        {week.projects.map((project, idx) => (
+                          <div
+                            key={idx}
+                            className={`border-2 rounded-[24px] p-5 ${getDifficultyColor(
+                              project.difficulty
+                            )}`}
+                          >
+                            <div className='flex items-start justify-between mb-3'>
+                              <h5 className='font-black text-sm uppercase tracking-tight'>{project.name}</h5>
+                              <span className='text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-white/50 rounded-lg'>
+                                {project.difficulty}
+                              </span>
+                            </div>
+                            <p className='text-xs font-medium leading-relaxed mb-4'>
+                              {project.description}
+                            </p>
+                            <div className="flex items-center gap-1 text-[10px] font-black uppercase opacity-60">
+                              <span>⏱️</span>
+                              <span>{project.estimatedHours} Hours Required</span>
+                            </div>
                           </div>
-                          <p className='text-sm opacity-90 mb-2'>
-                            {project.description}
-                          </p>
-                          <p className='text-xs opacity-75'>
-                            ⏱️ {project.estimatedHours} hours
-                          </p>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Exercises */}
-                {week.exercises && week.exercises.length > 0 && (
-                  <div>
-                    <h4 className='text-sm font-semibold text-green-300 mb-2 uppercase tracking-wide'>
-                      ✏️ Exercises
-                    </h4>
-                    <ul className='space-y-1'>
-                      {week.exercises.map((exercise, idx) => (
-                        <li
-                          key={idx}
-                          className='text-green-200 text-sm flex items-start gap-2'
-                        >
-                          <span className='mt-1'>•</span>
-                          <span>{exercise}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                  {/* Exercises & Resources */}
+                  <div className="space-y-8">
+                    {week.exercises && week.exercises.length > 0 && (
+                      <div>
+                        <h4 className='text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-4'>
+                          Skills Practice
+                        </h4>
+                        <div className="grid grid-cols-1 gap-2">
+                          {week.exercises.map((exercise, idx) => (
+                            <div key={idx} className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100/50">
+                              <span className="text-emerald-500 font-bold text-xs">✓</span>
+                              <span className="text-xs font-bold text-emerald-900">{exercise}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                {/* Resources */}
-                {week.resources && week.resources.length > 0 && (
-                  <div>
-                    <h4 className='text-sm font-semibold text-orange-300 mb-2 uppercase tracking-wide'>
-                      🔗 Resources
-                    </h4>
-                    <ul className='space-y-1'>
-                      {week.resources.map((resource, idx) => (
-                        <li
-                          key={idx}
-                          className='text-orange-200 text-sm flex items-start gap-2'
-                        >
-                          <span className='mt-1'>•</span>
-                          <span>{resource}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {week.resources && week.resources.length > 0 && (
+                      <div>
+                        <h4 className='text-[10px] font-black text-orange-600 uppercase tracking-[0.2em] mb-4'>
+                          Deep Dive Resources
+                        </h4>
+                        <div className="space-y-2">
+                          {week.resources.map((resource, idx) => (
+                            <div key={idx} className="flex items-center gap-3 p-3 bg-orange-50 rounded-xl border border-orange-100/50">
+                              <span className="text-orange-500 text-xs">🔗</span>
+                              <span className="text-xs font-bold text-orange-900">{resource}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             )}
           </div>
@@ -277,7 +311,7 @@ export default function RoadmapDisplay({ roadmap }: RoadmapDisplayProps) {
       </div>
 
       {/* Export Button */}
-      <div className='flex gap-2 justify-center pt-4'>
+      <div className='flex gap-4 justify-center pt-8'>
         <button
           onClick={() => {
             const content = JSON.stringify(roadmap, null, 2);
@@ -292,9 +326,9 @@ export default function RoadmapDisplay({ roadmap }: RoadmapDisplayProps) {
             element.click();
             document.body.removeChild(element);
           }}
-          className='bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-lg transition'
+          className='bg-white border-2 border-slate-200 text-slate-600 font-black text-[10px] uppercase tracking-[0.2em] py-4 px-10 rounded-2xl hover:border-purple-400 hover:text-purple-600 transition-all shadow-xl shadow-slate-100'
         >
-          📥 Export as JSON
+          📥 Archive Roadmap (JSON)
         </button>
       </div>
     </div>

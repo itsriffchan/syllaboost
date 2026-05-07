@@ -72,24 +72,28 @@ export default function Home() {
   };
 
   return (
-    <main className='min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900'>
-      <div className='container mx-auto px-4 py-8'>
+    <main className='min-h-screen bg-gradient-to-br from-[#d4f3ef] via-[#e8dbf2] to-[#f4eefb] selection:bg-purple-200'>
+      <div className='container mx-auto px-4 py-12'>
         {/* Header */}
-        <div className='text-center mb-12'>
-          <h1 className='text-5xl font-bold text-white mb-4'>
-            Syllaboost
+        <div className='text-center mb-16'>
+          <h1 className='text-7xl md:text-8xl font-bold mb-2 tracking-tight'>
+            <span className="text-[#2d1b4e] inline-block">Sylla</span>
+            <span className="italic bg-gradient-to-r from-[#8b5cf6] to-[#d8b4fe] bg-clip-text text-transparent pr-4 inline-block">Boost</span>
           </h1>
-          <p className='text-xl text-purple-300 max-w-2xl mx-auto'>
-            Transform your course syllabus into a personalized learning roadmap.
-            Upload your syllabus, select your skill level, and get a week-by-week
+          <p className='text-2xl font-bold text-[#2d1b4e] mb-8'>
+            Upload, Work, Upskill
+          </p>
+          <p className='text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed italic'>
+            Transform your course syllabus into a personalized learning roadmap. 
+            Upload your syllabus, select your skill level, and get a week-by-week 
             guide with projects and exercises tailored to your level.
           </p>
         </div>
 
         {/* Main Content */}
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto'>
+        <div className='grid grid-cols-1 lg:grid-cols-12 gap-12 max-w-7xl mx-auto'>
           {/* Left Column - Upload Section */}
-          <div className='lg:col-span-1'>
+          <div className='lg:col-span-4'>
             <div className='sticky top-8'>
               <SyllabusUpload
                 onSubmit={handleGenerateRoadmap}
@@ -99,25 +103,25 @@ export default function Home() {
           </div>
 
           {/* Right Column - Results */}
-          <div className='lg:col-span-2'>
-            {loading && <LoadingSpinner />}
+          <div className='lg:col-span-8'>
+            {loading && (
+              <div className="flex flex-col items-center justify-center p-12 bg-white/50 backdrop-blur-xl rounded-[40px] border border-white/80 shadow-2xl">
+                <LoadingSpinner />
+                <p className="mt-4 text-purple-600 font-medium animate-pulse">Analyzing Syllabus...</p>
+              </div>
+            )}
 
             {error && (
-              <div className='bg-red-900/20 border border-red-500 rounded-lg p-4 mb-4 animate-in fade-in duration-300'>
-                <div className='flex items-start gap-3'>
-                  <span className='text-xl'>⚠️</span>
+              <div className='bg-red-50 border border-red-200 rounded-[32px] p-8 mb-8 shadow-xl animate-in fade-in zoom-in duration-300'>
+                <div className='flex items-start gap-4'>
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-2xl">⚠️</div>
                   <div className='flex-1'>
-                    <p className='text-red-200 font-bold mb-1'>Generation Failed</p>
-                    <p className='text-red-300 text-sm leading-relaxed mb-3'>{error}</p>
+                    <p className='text-red-900 font-bold text-xl mb-2'>Generation Failed</p>
+                    <p className='text-red-700 leading-relaxed mb-4'>{error}</p>
                     <div className='flex flex-wrap gap-2'>
                       {error.includes('rate limit') && (
-                        <span className='bg-red-500/20 text-red-300 text-[10px] px-2 py-0.5 rounded border border-red-500/30 uppercase font-bold'>
+                        <span className='bg-red-200 text-red-700 text-xs px-3 py-1 rounded-full font-bold uppercase'>
                           Rate Limited
-                        </span>
-                      )}
-                      {error.includes('API key') && (
-                        <span className='bg-red-500/20 text-red-300 text-[10px] px-2 py-0.5 rounded border border-red-500/30 uppercase font-bold'>
-                          Config Issue
                         </span>
                       )}
                     </div>
@@ -126,13 +130,19 @@ export default function Home() {
               </div>
             )}
 
-            {roadmap && !loading && <RoadmapDisplay roadmap={roadmap} />}
+            {roadmap && !loading && (
+              <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
+                <RoadmapDisplay roadmap={roadmap} />
+              </div>
+            )}
 
             {!roadmap && !loading && !error && (
-              <div className='bg-slate-800/50 border border-purple-500/30 rounded-lg p-8 text-center'>
-                <p className='text-purple-300 text-lg'>
-                  Upload a syllabus to get started
+              <div className='bg-white/40 backdrop-blur-xl border border-white/60 rounded-[40px] p-16 text-center shadow-inner'>
+                <div className="w-20 h-20 bg-purple-100 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-6">📄</div>
+                <p className='text-[#2d1b4e] text-xl font-medium'>
+                  Upload a syllabus to build your path
                 </p>
+                <p className="text-slate-500 mt-2">Your personalized roadmap will appear here</p>
               </div>
             )}
           </div>

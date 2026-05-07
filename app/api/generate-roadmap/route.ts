@@ -16,6 +16,7 @@ async function callGroq(prompt: string) {
         content: prompt,
       },
     ],
+    response_format: { type: 'json_object' }
   });
 
   return message.choices[0].message.content || '';
@@ -42,12 +43,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Truncate syllabus if it's too long
-    const maxLength = 8000;
-    const truncatedSyllabus = syllabus.length > maxLength 
-      ? syllabus.substring(0, maxLength) + '... [truncated]' 
+    // Truncate syllabus to avoid Groq 413 "Request Entity Too Large" errors
+    const maxLength = 4000;
+    const truncatedSyllabus = syllabus.length > maxLength
+      ? syllabus.substring(0, maxLength) + '... [truncated]'
       : syllabus;
-    
+
     const prompt = `You are an educational curriculum expert. You have received the following course syllabus:
 
 ${truncatedSyllabus}
@@ -87,7 +88,7 @@ Format your response as a structured JSON object with the following schema:
   "overallSummary": "string",
   "recommendations": [
     {
-      "type": "guide|certification|course|step-by-step",
+      "type": "guide", // Choose exactly one from: guide, certification, course, step-by-step
       "title": "string",
       "description": "string",
       "provider": "string",
@@ -97,7 +98,7 @@ Format your response as a structured JSON object with the following schema:
   ]
 }
 
-Ensure the recommendations are highly structured, providing actual step-by-step guides and specific certifications from reputable platforms (e.g., freeCodeCamp, DataCamp, Coursera, etc.) that complement the syllabus.`;
+Ensure the recommendations are highly structured, providing actual step-by-step guides and specific certifications from reputable platforms (e.g., freeCodeCamp, DataCamp, Coursera, etc.) that complement the syllabus. You must pick exactly one of the types (guide, certification, course, or step-by-step) for each recommendation.`;
 
     let responseText = '';
     let usedFallback = false;
@@ -110,9 +111,9 @@ Ensure the recommendations are highly structured, providing actual step-by-step 
       console.log('Groq API success');
     } catch (groqError: any) {
       groqErrorDetail = groqError.message || String(groqError);
-      
+
       console.error('Groq API failed:', groqErrorDetail);
-      
+
       try {
         console.log('Attempting Gemini fallback...');
         responseText = await callGemini(prompt);
@@ -128,9 +129,9 @@ Ensure the recommendations are highly structured, providing actual step-by-step 
         }
 
         console.error('Gemini Fallback also failed:', geminiErrorDetail);
-        
+
         return NextResponse.json(
-          { 
+          {
             error: 'AI Services Unavailable',
             details: `Groq: ${groqErrorDetail.substring(0, 500)}. Gemini: ${geminiErrorDetail.substring(0, 500)}.`,
             groqError: groqErrorDetail,

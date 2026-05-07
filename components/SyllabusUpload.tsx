@@ -193,11 +193,16 @@ export default function SyllabusUpload({
   };
 
   return (
-    <div className='bg-slate-800/40 backdrop-blur border border-purple-500/30 rounded-lg p-6 shadow-xl'>
-      <form onSubmit={handleSubmit} className='space-y-4'>
+    <div className='bg-white/70 backdrop-blur-2xl border border-white/80 rounded-[40px] p-8 shadow-2xl shadow-purple-200/50'>
+      <div className="mb-6 flex items-center gap-3">
+        <div className="w-10 h-10 bg-purple-600 rounded-2xl flex items-center justify-center text-white text-xl">📁</div>
+        <h2 className="text-2xl font-bold text-[#2d1b4e]">Input Syllabus</h2>
+      </div>
+      
+      <form onSubmit={handleSubmit} className='space-y-6'>
         {/* File Upload */}
-        <div>
-          <label className='block text-sm font-medium text-white mb-2'>
+        <div className="bg-slate-50/50 border-2 border-dashed border-purple-200 rounded-3xl p-6 transition-all hover:border-purple-400 group">
+          <label className='block text-sm font-bold text-[#2d1b4e] mb-3 uppercase tracking-wider'>
             Upload Syllabus File
           </label>
           <input
@@ -205,68 +210,80 @@ export default function SyllabusUpload({
             accept='.txt,.pdf,.doc,.docx'
             onChange={handleFileUpload}
             disabled={fileLoading}
-            className='block w-full text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 disabled:opacity-50 cursor-pointer'
+            className='block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 disabled:opacity-50 cursor-pointer'
           />
           {fileLoading && (
-            <div className='mt-2 flex items-center gap-2 text-sm text-purple-300'>
-              <div className='w-3 h-3 border-2 border-purple-300 border-t-transparent rounded-full animate-spin' />
-              Parsing file...
+            <div className='mt-3 flex items-center gap-2 text-sm text-purple-600 font-medium'>
+              <div className='w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin' />
+              Extracting knowledge...
             </div>
           )}
           {fileError && (
-            <div className='mt-2 text-sm text-red-300'>Error: {fileError}</div>
+            <div className='mt-3 text-sm text-red-500 font-medium flex items-center gap-2'>
+              <span>❌</span> {fileError}
+            </div>
           )}
         </div>
 
         {/* Text Area */}
         <div>
-          <label className='block text-sm font-medium text-white mb-2'>
-            Or Paste Syllabus Here
+          <label className='block text-sm font-bold text-[#2d1b4e] mb-2 uppercase tracking-wider'>
+            Or Paste Syllabus Text
           </label>
           <textarea
             value={syllabus}
             onChange={(e) => setSyllabus(e.target.value)}
-            placeholder='Paste your course syllabus here (e.g., "Week 1: Introduction to JavaScript, basic syntax, variables...")'
-            className='w-full h-40 bg-slate-700/50 border border-slate-600 rounded-lg p-3 text-white placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 resize-none'
+            placeholder='Paste your course syllabus here...'
+            className='w-full h-48 bg-white border-2 border-slate-100 rounded-3xl p-4 text-[#2d1b4e] placeholder-slate-400 focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all resize-none shadow-sm'
           />
         </div>
 
         {/* Skill Level */}
         <div>
-          <label className='block text-sm font-medium text-white mb-2'>
-            Your Skill Level
+          <label className='block text-sm font-bold text-[#2d1b4e] mb-2 uppercase tracking-wider'>
+            Target Skill Level
           </label>
-          <select
-            value={skillLevel}
-            onChange={(e) => setSkillLevel(e.target.value)}
-            className='w-full bg-slate-700/50 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20'
-          >
-            <option value='beginner'>Beginner</option>
-            <option value='intermediate'>Intermediate</option>
-            <option value='advanced'>Advanced</option>
-          </select>
+          <div className="grid grid-cols-3 gap-2">
+            {['beginner', 'intermediate', 'advanced'].map((level) => (
+              <button
+                key={level}
+                type="button"
+                onClick={() => setSkillLevel(level)}
+                className={`py-3 px-2 rounded-2xl text-xs font-bold uppercase tracking-tighter transition-all ${
+                  skillLevel === level 
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-200' 
+                    : 'bg-white text-slate-600 border-2 border-slate-100 hover:border-purple-200'
+                }`}
+              >
+                {level}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Submit Button */}
         <button
           type='submit'
           disabled={loading || fileLoading}
-          className='w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2'
+          className='w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:from-slate-400 disabled:to-slate-500 text-white font-bold py-5 px-6 rounded-[24px] transition-all duration-300 shadow-xl shadow-purple-200 flex items-center justify-center gap-3 active:scale-[0.98]'
         >
           {loading || fileLoading ? (
             <>
-              <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
-              {fileLoading ? 'Parsing...' : 'Generating...'}
+              <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin' />
+              <span>{fileLoading ? 'Reading File...' : 'Optimizing...'}</span>
             </>
           ) : (
-            'Generate Roadmap'
+            <>
+              <span className="text-xl">🚀</span>
+              <span>Generate Roadmap</span>
+            </>
           )}
         </button>
 
         {/* Info Text */}
         {fileContent && !fileError && (
-          <div className='text-sm text-green-400 bg-green-900/20 border border-green-500/30 rounded p-2'>
-            ✓ {fileContent} loaded successfully
+          <div className='text-xs text-green-600 bg-green-50 border border-green-100 rounded-2xl p-3 flex items-center gap-2 font-bold'>
+            <span className="text-lg">✓</span> {fileContent} analyzed
           </div>
         )}
       </form>

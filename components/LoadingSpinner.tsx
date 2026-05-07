@@ -12,10 +12,10 @@ export default function LoadingSpinner() {
       </div>
 
       <div className='mt-6 text-center'>
-        <h3 className='text-lg font-semibold text-white mb-2'>
+        <h3 className='text-lg font-semibold text-[#2d1b4e] mb-2'>
           Generating Your Roadmap
         </h3>
-        <p className='text-purple-300'>
+        <p className='text-slate-500'>
           Processing your syllabus with AI...
         </p>
       </div>
