@@ -69,9 +69,6 @@ export default function RoadmapDisplay({ roadmap }: RoadmapDisplayProps) {
     <div className='space-y-10'>
       {/* Header */}
       <div className='relative'>
-        <div className="absolute -top-12 -left-6 text-8xl font-black text-purple-600/5 select-none pointer-events-none uppercase">
-          Roadmap
-        </div>
         <div className='bg-white/80 backdrop-blur-xl border border-white rounded-[40px] p-10 shadow-2xl shadow-purple-200/40 relative overflow-hidden'>
           <div className="absolute top-0 right-0 w-32 h-32 bg-purple-100/50 rounded-bl-[100px] -mr-8 -mt-8"></div>
           <div className="flex items-center gap-4 mb-4">
