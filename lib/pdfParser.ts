@@ -55,23 +55,56 @@ export function parseSyllabusText(fullText: string): ParsedSyllabus {
  * Extract course name from the beginning of the document
  */
 function extractCourseName(lines: string[]): string {
-  // Look for the pattern: COURSE TITLE in the header
-  for (let i = 0; i < Math.min(20, lines.length); i++) {
-    const line = lines[i].trim().toUpperCase();
-    if (line.includes('COURSE TITLE') || line.includes('APPLICATION DEVELOPMENT')) {
-      // Try to find the actual course name in this or next lines
-      for (let j = i; j < Math.min(i + 3, lines.length); j++) {
-        const candidate = lines[j].trim();
-        if (candidate.length > 10 && 
-            candidate.length < 200 && 
-            !candidate.includes('PREREQUISITE') &&
-            !candidate.includes('COURSE CODE') &&
-            /[A-Z]/.test(candidate)) {
-          return candidate;
+  // Look for explicit COURSE TITLE pattern
+  for (let i = 0; i < Math.min(30, lines.length); i++) {
+    const line = lines[i].trim();
+    const lineUpper = line.toUpperCase();
+    
+    // Look for "COURSE TITLE" or just the course name line
+    if (lineUpper.includes('COURSE TITLE') || lineUpper.includes('APPLICATION DEVELOPMENT')) {
+      // Collect the course name from this line and following lines
+      let courseName = '';
+      
+      // If COURSE TITLE is in the line, get everything after it
+      if (lineUpper.includes('COURSE TITLE')) {
+        const match = line.match(/COURSE\s+TITLE\s+(.+)/i);
+        if (match) {
+          courseName = match[1].trim();
+        }
+      }
+      
+      // If we didn't get it, check the next few lines
+      if (!courseName) {
+        for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+          const candidate = lines[j].trim();
+          
+          // Skip empty lines and metadata
+          if (!candidate || candidate.match(/^\d+\s+UNITS?|^PREREQUISITE|^COURSE CODE|^UNITS\s*\/|^2\s+UNITS/i)) {
+            continue;
+          }
+          
+          // Look for the actual course name (usually has "AND" or "WITH" or multiple capital words)
+          if (candidate.length > 10 && candidate.length < 300 && /[A-Z]/.test(candidate)) {
+            courseName = candidate;
+            break;
+          }
+        }
+      }
+      
+      if (courseName) {
+        // Clean up the course name
+        courseName = courseName
+          .replace(/\s+/g, ' ')
+          .replace(/\(LAB\)|\(LEC\)/i, '') // Remove (LAB) or (LEC) designation
+          .trim();
+        
+        if (courseName.length > 5) {
+          return courseName;
         }
       }
     }
   }
+  
   return 'Untitled Course';
 }
 
@@ -79,10 +112,31 @@ function extractCourseName(lines: string[]): string {
  * Extract course code (e.g., CCS0043L)
  */
 function extractCourseCode(lines: string[]): string | undefined {
+  // Look for COURSE CODE header first
   for (let i = 0; i < Math.min(30, lines.length); i++) {
-    const match = lines[i].match(/([A-Z]{2,4}\d{4}[A-Z]?)/);
-    if (match) return match[1];
+    const lineUpper = lines[i].toUpperCase();
+    
+    if (lineUpper.includes('COURSE CODE')) {
+      // Code is usually in the same line or next line
+      const match = lines[i].match(/COURSE\s+CODE[\s:]*([A-Z0-9]{6,10})/i);
+      if (match) return match[1];
+      
+      // Check next line
+      if (i + 1 < lines.length) {
+        const nextMatch = lines[i + 1].match(/^([A-Z]{2,4}\d{4}[A-Z]?)/);
+        if (nextMatch) return nextMatch[1];
+      }
+    }
   }
+  
+  // Fallback: look for course code pattern anywhere in first 30 lines
+  for (let i = 0; i < Math.min(30, lines.length); i++) {
+    const match = lines[i].match(/\b([A-Z]{2,4}\d{4}[A-Z]?)\b/);
+    if (match && match[1].length >= 6) {
+      return match[1];
+    }
+  }
+  
   return undefined;
 }
 
@@ -104,31 +158,54 @@ function extractCourseDescription(lines: string[]): string {
   // Look for COURSE DESCRIPTION section
   let descStart = -1;
   
-  for (let i = 0; i < Math.min(40, lines.length); i++) {
-    if (lines[i].toUpperCase().includes('COURSE DESCRIPTION')) {
+  for (let i = 0; i < Math.min(50, lines.length); i++) {
+    const lineUpper = lines[i].toUpperCase();
+    
+    // Match "COURSE DESCRIPTION" even if split across lines
+    if (lineUpper.includes('COURSE') && lineUpper.includes('DESCRIPTION')) {
       descStart = i + 1;
+      break;
+    }
+    
+    // Also check if description content starts (usually after COURSE CODE/TITLE)
+    if (i > 5 && !descStart && lineUpper.includes('COURSE') && !lineUpper.includes('CODE') && !lineUpper.includes('TITLE')) {
+      descStart = i;
       break;
     }
   }
 
   if (descStart === -1) {
-    descStart = Math.min(10, lines.length);
+    descStart = Math.min(15, lines.length);
   }
 
   // Collect lines until we hit another section header
   let description = '';
-  for (let i = descStart; i < Math.min(descStart + 5, lines.length); i++) {
+  let lineCount = 0;
+  
+  for (let i = descStart; i < Math.min(descStart + 8, lines.length); i++) {
     const line = lines[i].trim();
+    
     if (!line) continue;
     
-    if (line.toUpperCase().match(/^(INSTITUTION|DEPARTMENT|PROGRAM|VISION|MISSION)/)) {
+    // Stop if we hit major sections
+    if (line.match(/^(INSTITUTION|DEPARTMENT|PROGRAM|EDUCATIONAL|VISION|MODULE|WEEK|GRADE|PREREQUISITE)/i)) {
       break;
     }
     
-    description += line + ' ';
+    // Only add substantive content
+    if (line.length > 10 && !line.match(/^[A-Z\s]{0,5}$/)) {
+      description += line + ' ';
+      lineCount++;
+      if (lineCount >= 3) break; // Usually 2-3 lines for description
+    }
   }
 
-  return description.trim().substring(0, 500);
+  const result = description
+    .trim()
+    .replace(/\s+/g, ' ')
+    .substring(0, 500);
+  
+  return result || 'Course content and learning objectives are detailed in the curriculum timeline above.';
 }
 
 /**
