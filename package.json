@@ -1,7 +1,8 @@
 {
-  "name": "course-roadmap",
-  "version": "0.1.0",
+  "name": "syllaboost",
+  "version": "1.0.0",
   "private": true,
+  "description": "Transform course syllabi into personalized weekly project roadmaps using AI",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
