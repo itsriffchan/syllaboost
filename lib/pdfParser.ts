@@ -105,6 +105,14 @@ function extractCourseName(lines: string[]): string {
     }
   }
   
+  // Last resort: look for any line that looks like a course title (all caps, long)
+  for (let i = 0; i < Math.min(20, lines.length); i++) {
+    const line = lines[i].trim();
+    if (line.length > 10 && line === line.toUpperCase() && !line.includes('FEU') && !line.includes('SYLLABUS')) {
+      return line;
+    }
+  }
+  
   return 'Untitled Course';
 }
 
@@ -244,16 +252,16 @@ function extractFEUTECHModules(lines: string[]): WeekInfo[] {
       const activities = extractTeachingActivities(lines, i);
       const assessments = extractAssessmentTasks(lines, i);
 
-      if (topics.length > 0 || outcomes.length > 0) {
-        weeks.push({
-          weekNumber: moduleNum,
-          title: `MODULE ${moduleNum}: ${moduleTitle}`,
-          topics: topics,
-          learningOutcomes: outcomes,
-          teachingActivities: activities,
-          assessmentTasks: assessments,
-        });
-      }
+      // ALWAYS push the week if it's a module, even if topics are sparse
+      // The AI will fill in the gaps if we provide enough surrounding text
+      weeks.push({
+        weekNumber: moduleNum,
+        title: `MODULE ${moduleNum}: ${moduleTitle}`,
+        topics: topics.length > 0 ? topics : [moduleTitle], // Fallback to title if no topics found
+        learningOutcomes: outcomes,
+        teachingActivities: activities,
+        assessmentTasks: assessments,
+      });
     } else if (courseOrienMatch && !weeks.some(w => w.title.includes('ORIENTATION'))) {
       // Add course orientation as week 0
       const topics = extractModuleTopics(lines, i);
@@ -268,7 +276,8 @@ function extractFEUTECHModules(lines: string[]): WeekInfo[] {
     }
   }
 
-  return weeks;
+  // Sort weeks by number to ensure timeline is correct
+  return weeks.sort((a, b) => a.weekNumber - b.weekNumber);
 }
 
 /**
@@ -293,16 +302,16 @@ function extractModuleTopics(lines: string[], startIdx: number): string[] {
   while (i < stopAtIndex && topics.length < 15) {
     const line = lines[i].trim();
 
-    // Look for SUBTOPIC headers and bullet points
-    if (line.match(/^SUBTOPIC\s+\d+|^[-•*]\s+/i)) {
+    // Look for SUBTOPIC headers, bullet points, or just substantive lines
+    if (line.match(/^SUBTOPIC\s+\d+|^[-•*]\s+/i) || (line.length > 5 && !line.includes('MODULE') && !line.includes('WEEK'))) {
       const cleanLine = line
         .replace(/^SUBTOPIC\s+\d+\s*[:–\-]?\s*/i, '')
         .replace(/^[-•*]\s*/i, '')
         .trim();
 
       if (cleanLine && cleanLine.length > 3 && cleanLine.length < 200) {
-        // Avoid adding section headers
-        if (!cleanLine.match(/^(INTENDED|DETAILED|TEACHING|ASSESSMENT|CLO|WEEK)/i)) {
+        // Avoid adding section headers or administrative text
+        if (!cleanLine.match(/^(INTENDED|DETAILED|TEACHING|ASSESSMENT|CLO|WEEK|PAGE|DATE|REVISION|NO\.)/i)) {
           topics.push(cleanLine);
         }
       }
