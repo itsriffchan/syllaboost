@@ -1,6 +1,6 @@
 import { Groq } from 'groq-sdk';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextRequest, NextResponse } from 'next/server';
+import { parseSyllabusText, formatParsedSyllabusForAI } from '@/lib/pdfParser';
 
 async function callGroq(prompt: string) {
   const groq = new Groq({
@@ -9,7 +9,7 @@ async function callGroq(prompt: string) {
 
   const message = await (groq.chat.completions as any).create({
     model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
-    max_tokens: 4096,
+    max_tokens: 2048,
     messages: [
       {
         role: 'user',
@@ -20,16 +20,6 @@ async function callGroq(prompt: string) {
   });
 
   return message.choices[0].message.content || '';
-}
-
-async function callGemini(prompt: string) {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
-  const model = genAI.getGenerativeModel({ model: modelName });
-
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  return response.text();
 }
 
 export async function POST(request: NextRequest) {
@@ -43,30 +33,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Truncate syllabus to avoid Groq 413 "Request Entity Too Large" errors
-    const maxLength = 4000;
-    const truncatedSyllabus = syllabus.length > maxLength
-      ? syllabus.substring(0, maxLength) + '... [truncated]'
-      : syllabus;
+    if (syllabus.length < 100) {
+      return NextResponse.json(
+        { error: 'Syllabus content is too short. Please provide more detailed syllabus information.' },
+        { status: 400 }
+      );
+    }
 
-    const prompt = `You are an educational curriculum expert. You have received the following course syllabus:
+    // Parse the syllabus to extract only important information
+    console.log('Parsing syllabus...');
+    const parsedSyllabus = parseSyllabusText(syllabus);
+    
+    // Format the parsed data concisely for AI processing
+    const formattedSyllabus = formatParsedSyllabusForAI(parsedSyllabus);
+    
+    console.log(`Parsed ${parsedSyllabus.weeks.length} weeks. Formatted length: ${formattedSyllabus.length} characters`);
 
-${truncatedSyllabus}
+    const prompt = `You are an expert curriculum designer. Based on the following course syllabus structure, create a detailed learning roadmap for a ${skillLevel} level student.
 
-The student has a skill level of: ${skillLevel} (beginner, intermediate, or advanced)
+${formattedSyllabus}
 
-Based on this syllabus, create a detailed week-by-week learning roadmap that:
-1. Breaks down the course by week
-2. Lists the key concepts taught in each week
-3. Suggests practical projects and exercises for the ${skillLevel} level
-4. Provides estimated time commitments
-5. Suggests resources and practice problems
-
-Format your response as a structured JSON object with the following schema:
+Generate a comprehensive week-by-week learning roadmap in the following JSON format:
 {
-  "courseName": "string",
-  "skillLevel": "string",
-  "totalWeeks": number,
+  "courseName": "${parsedSyllabus.courseName}",
+  "skillLevel": "${skillLevel}",
+  "totalWeeks": ${parsedSyllabus.totalWeeks},
   "weeks": [
     {
       "week": number,
@@ -88,7 +79,7 @@ Format your response as a structured JSON object with the following schema:
   "overallSummary": "string",
   "recommendations": [
     {
-      "type": "guide", // Choose exactly one from: guide, certification, course, step-by-step
+      "type": "guide|certification|course|step-by-step",
       "title": "string",
       "description": "string",
       "provider": "string",
@@ -98,48 +89,31 @@ Format your response as a structured JSON object with the following schema:
   ]
 }
 
-Ensure the recommendations are highly structured, providing actual step-by-step guides and specific certifications from reputable platforms (e.g., freeCodeCamp, DataCamp, Coursera, etc.) that complement the syllabus. You must pick exactly one of the types (guide, certification, course, or step-by-step) for each recommendation.`;
+Instructions:
+- Create ${parsedSyllabus.weeks.length} weeks of structured learning
+- Tailor projects and difficulty to the ${skillLevel} skill level
+- Each week should have 2-3 projects and 3-5 exercises
+- Estimate 8-12 hours per week
+- Include specific, actionable exercises
+- Recommend resources from: freeCodeCamp, Coursera, DataCamp, Udacity, official documentation`;
 
     let responseText = '';
-    let usedFallback = false;
-    let groqErrorDetail = '';
-    let geminiErrorDetail = '';
 
     try {
-      console.log('Attempting Groq API...');
+      console.log('Calling Groq API...');
       responseText = await callGroq(prompt);
       console.log('Groq API success');
     } catch (groqError: any) {
-      groqErrorDetail = groqError.message || String(groqError);
-
+      const groqErrorDetail = groqError.message || String(groqError);
       console.error('Groq API failed:', groqErrorDetail);
 
-      try {
-        console.log('Attempting Gemini fallback...');
-        responseText = await callGemini(prompt);
-        usedFallback = true;
-        console.log('Gemini Fallback success');
-      } catch (geminiError: any) {
-        geminiErrorDetail = geminiError.message || String(geminiError);
-        // Check for Gemini rate limit (usually mentions "429" or "exhausted")
-        if (geminiErrorDetail.includes('429') || geminiErrorDetail.toLowerCase().includes('quota')) {
-          geminiErrorDetail = 'Gemini API rate limit exceeded';
-        } else if (geminiErrorDetail.includes('401') || geminiErrorDetail.toLowerCase().includes('api key')) {
-          geminiErrorDetail = 'Invalid Gemini API key';
-        }
-
-        console.error('Gemini Fallback also failed:', geminiErrorDetail);
-
-        return NextResponse.json(
-          {
-            error: 'AI Services Unavailable',
-            details: `Groq: ${groqErrorDetail.substring(0, 500)}. Gemini: ${geminiErrorDetail.substring(0, 500)}.`,
-            groqError: groqErrorDetail,
-            geminiError: geminiErrorDetail
-          },
-          { status: 503 }
-        );
-      }
+      return NextResponse.json(
+        {
+          error: 'AI Service Error',
+          details: groqErrorDetail.substring(0, 500),
+        },
+        { status: 503 }
+      );
     }
 
     // Extract JSON from the response
@@ -157,9 +131,7 @@ Ensure the recommendations are highly structured, providing actual step-by-step 
     }
 
     return NextResponse.json({
-      success: true,
       roadmap,
-      fallbackUsed: usedFallback
     });
   } catch (error) {
     console.error('Error processing syllabus:', error);
