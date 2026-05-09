@@ -49,53 +49,54 @@ export async function POST(request: NextRequest) {
     
     console.log(`Parsed ${parsedSyllabus.weeks.length} weeks. Formatted length: ${formattedSyllabus.length} characters`);
 
-    const prompt = `You are an expert curriculum designer. Based on the following course syllabus structure, create a detailed learning roadmap for a ${skillLevel} level student.
+    const prompt = `You are an expert curriculum designer. Based on the following FEUTECH course structure with modules, create a detailed learning roadmap for a ${skillLevel} level student.
 
 ${formattedSyllabus}
 
-Generate a comprehensive week-by-week learning roadmap in the following JSON format:
+Generate a comprehensive MODULE-based learning roadmap in the following JSON format. Match the number of weeks to the number of modules extracted:
 {
   "courseName": "${parsedSyllabus.courseName}",
   "skillLevel": "${skillLevel}",
   "totalWeeks": ${parsedSyllabus.totalWeeks},
   "weeks": [
     {
-      "week": number,
-      "title": "string",
-      "concepts": ["string"],
+      "week": 1,
+      "title": "MODULE 1: [Topic]",
+      "concepts": ["concept1", "concept2"],
       "projects": [
         {
-          "name": "string",
-          "description": "string",
+          "name": "Project name",
+          "description": "Description",
           "difficulty": "easy|medium|hard",
-          "estimatedHours": number
+          "estimatedHours": 3
         }
       ],
-      "exercises": ["string"],
-      "resources": ["string"],
-      "estimatedHoursPerWeek": number
+      "exercises": ["exercise1", "exercise2"],
+      "resources": ["resource1", "resource2"],
+      "estimatedHoursPerWeek": 10
     }
   ],
-  "overallSummary": "string",
+  "overallSummary": "Summary of the entire course",
   "recommendations": [
     {
       "type": "guide|certification|course|step-by-step",
-      "title": "string",
-      "description": "string",
-      "provider": "string",
-      "url": "string",
-      "steps": ["string"]
+      "title": "Title",
+      "description": "Description",
+      "provider": "Provider",
+      "url": "https://example.com",
+      "steps": ["step1", "step2"]
     }
   ]
 }
 
 Instructions:
-- Create ${parsedSyllabus.weeks.length} weeks of structured learning
-- Tailor projects and difficulty to the ${skillLevel} skill level
-- Each week should have 2-3 projects and 3-5 exercises
+- Create ${parsedSyllabus.totalWeeks} weeks matching each MODULE
+- Base project difficulty on ${skillLevel} level
+- Each week should have 2-3 projects and 3-4 exercises
 - Estimate 8-12 hours per week
-- Include specific, actionable exercises
-- Recommend resources from: freeCodeCamp, Coursera, DataCamp, Udacity, official documentation`;
+- Provide specific, actionable exercises aligned to module topics
+- Recommend resources from: freeCodeCamp, Coursera, official documentation, Udacity
+- Match the week count exactly to ${parsedSyllabus.totalWeeks}`;
 
     let responseText = '';
 

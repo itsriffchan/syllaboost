@@ -1,6 +1,7 @@
 /**
  * Optimized PDF Parser for FEUTECH Syllabi
- * Extracts only essential course and weekly information to minimize token usage
+ * Extracts course modules/weeks from FEUTECH's structured table format
+ * Focuses on MODULE content, learning outcomes, and teaching activities
  */
 
 interface ParsedSyllabus {
@@ -16,20 +17,21 @@ interface ParsedSyllabus {
 
 interface WeekInfo {
   weekNumber: number;
-  title: string;
+  title: string; // e.g., "MODULE 1: INTRODUCTION TO PHP"
   topics: string[];
   learningOutcomes?: string[];
-  assessments?: string[];
+  teachingActivities?: string[];
+  assessmentTasks?: string[];
 }
 
 /**
- * Intelligently extracts structured course information from PDF text
- * Focuses on weekly breakdowns and core content, filtering administrative details
+ * Intelligently extracts structured course information from FEUTECH PDF text
+ * FEUTECH uses a table format with MODULE entries
  */
 export function parseSyllabusText(fullText: string): ParsedSyllabus {
-  // Normalize text
+  // Normalize text - remove extra whitespace but preserve structure
   const text = fullText.replace(/\f/g, '\n'); // Remove form feeds
-  const lines = text.split('\n').filter(line => line.trim());
+  const lines = text.split('\n');
 
   const parsed: ParsedSyllabus = {
     courseName: extractCourseName(lines),
@@ -42,9 +44,9 @@ export function parseSyllabusText(fullText: string): ParsedSyllabus {
     prerequisite: extractPrerequisite(lines),
   };
 
-  // Extract weekly content - this is the most important part
-  parsed.weeks = extractWeeklyContent(lines);
-  parsed.totalWeeks = parsed.weeks.length || estimateTotalWeeks(lines);
+  // Extract modules/weeks from FEUTECH table format
+  parsed.weeks = extractFEUTECHModules(lines);
+  parsed.totalWeeks = parsed.weeks.length;
 
   return parsed;
 }
@@ -53,207 +55,282 @@ export function parseSyllabusText(fullText: string): ParsedSyllabus {
  * Extract course name from the beginning of the document
  */
 function extractCourseName(lines: string[]): string {
-  // Look for common patterns in first 20 lines
+  // Look for the pattern: COURSE TITLE in the header
   for (let i = 0; i < Math.min(20, lines.length); i++) {
-    const line = lines[i].trim();
-    
-    // Skip short lines, headers, and metadata
-    if (line.length < 5 || line.length > 150) continue;
-    
-    // Match course name patterns: usually capitalized, not all caps, not metadata
-    if (/^[A-Z][a-zA-Z0-9\s:&-]+$/.test(line) && 
-        !line.match(/^(COURSE|SUBJECT|TITLE|CREDITS|CODE)/i)) {
-      return line;
+    const line = lines[i].trim().toUpperCase();
+    if (line.includes('COURSE TITLE') || line.includes('APPLICATION DEVELOPMENT')) {
+      // Try to find the actual course name in this or next lines
+      for (let j = i; j < Math.min(i + 3, lines.length); j++) {
+        const candidate = lines[j].trim();
+        if (candidate.length > 10 && 
+            candidate.length < 200 && 
+            !candidate.includes('PREREQUISITE') &&
+            !candidate.includes('COURSE CODE') &&
+            /[A-Z]/.test(candidate)) {
+          return candidate;
+        }
+      }
     }
   }
   return 'Untitled Course';
 }
 
 /**
- * Extract course code (e.g., CS101, IT101)
+ * Extract course code (e.g., CCS0043L)
  */
 function extractCourseCode(lines: string[]): string | undefined {
-  for (const line of lines.slice(0, 30)) {
-    const match = line.match(/([A-Z]{2,4}\s*\d{3,4})/);
+  for (let i = 0; i < Math.min(30, lines.length); i++) {
+    const match = lines[i].match(/([A-Z]{2,4}\d{4}[A-Z]?)/);
     if (match) return match[1];
   }
   return undefined;
 }
 
 /**
- * Extract course credits if available
+ * Extract course credits
  */
 function extractCredits(lines: string[]): number | undefined {
   for (const line of lines.slice(0, 30)) {
-    const match = line.match(/(?:credits?|units?)[\s:]*(\d+)/i);
+    const match = line.match(/(?:units?|credits?)[\s:]*(\d+)/i);
     if (match) return parseInt(match[1]);
   }
   return undefined;
 }
 
 /**
- * Extract course description (usually first paragraph)
+ * Extract course description
  */
 function extractCourseDescription(lines: string[]): string {
-  // Find description section - usually after course title, before weekly breakdown
+  // Look for COURSE DESCRIPTION section
   let descStart = -1;
   
   for (let i = 0; i < Math.min(40, lines.length); i++) {
-    const line = lines[i].toLowerCase();
-    if (line.includes('description') || line.includes('overview') || 
-        line.includes('course outline')) {
+    if (lines[i].toUpperCase().includes('COURSE DESCRIPTION')) {
       descStart = i + 1;
       break;
     }
   }
 
-  // If no explicit description header, use first substantial paragraph
   if (descStart === -1) {
-    descStart = Math.min(5, lines.length);
+    descStart = Math.min(10, lines.length);
   }
 
-  // Collect lines until we hit "week", "topics", or "syllabus"
+  // Collect lines until we hit another section header
   let description = '';
-  for (let i = descStart; i < Math.min(descStart + 10, lines.length); i++) {
+  for (let i = descStart; i < Math.min(descStart + 5, lines.length); i++) {
     const line = lines[i].trim();
     if (!line) continue;
     
-    // Stop if we hit weekly content
-    if (line.toLowerCase().match(/^(week|topic|syllabus|course content|outline)/i)) {
+    if (line.toUpperCase().match(/^(INSTITUTION|DEPARTMENT|PROGRAM|VISION|MISSION)/)) {
       break;
     }
     
     description += line + ' ';
   }
 
-  return description.trim().substring(0, 500); // Cap at 500 chars
+  return description.trim().substring(0, 500);
 }
 
 /**
- * Extract weekly content - the core information we need
- * Looks for patterns like "Week 1", "Week 2", etc.
+ * Extract modules from FEUTECH table format
+ * Looks for patterns like "MODULE 1:", "MODULE 2 –", etc.
+ * And time indicators like "1 / 1.33 hrs", "2 / 2.67 hrs"
  */
-function extractWeeklyContent(lines: string[]): WeekInfo[] {
+function extractFEUTECHModules(lines: string[]): WeekInfo[] {
   const weeks: WeekInfo[] = [];
-  
-  let currentWeek: WeekInfo | null = null;
-  let weekPattern = /^week\s+(\d+)/i;
+  let moduleCount = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     
-    // Check if this is a week header
-    const weekMatch = line.match(weekPattern);
-    if (weekMatch) {
-      // Save previous week if exists
-      if (currentWeek && currentWeek.topics.length > 0) {
-        weeks.push(currentWeek);
-      }
-
-      const weekNum = parseInt(weekMatch[1]);
-      // Extract title from the same line or next line
-      let title = line.substring(weekMatch[0].length).trim();
-      if (!title && i + 1 < lines.length) {
-        title = lines[i + 1].trim();
-        i++; // Skip next line as we used it for title
-      }
-
-      currentWeek = {
-        weekNumber: weekNum,
-        title: title || `Week ${weekNum}`,
-        topics: [],
-        learningOutcomes: [],
-        assessments: [],
-      };
+    // Skip empty lines, administrative sections
+    if (!line || 
+        line.match(/^(GRADING|ASSESSMENT CRITERIA|INSTRUCTIONAL|TEXTBOOK|REFERENCES|VISION|MISSION|EDUCATIONAL|PROGRAM|GRADUATE|PREREQUISITE|INSTITUTION|DEPARTMENT)/i) ||
+        line.match(/^(CLO|LONG EXAMINATION|FINAL EXAMINATION|COURSE OUTCOMES|COURSE CODE|COURSE TITLE|UNITS)/i)) {
       continue;
     }
 
-    // Collect content for current week
-    if (currentWeek) {
-      const lowerLine = line.toLowerCase();
+    // Detect MODULE X or COURSE ORIENTATION or MIDTERM/FINAL EXAM
+    let moduleMatch = line.match(/^MODULE\s+(\d+)\s*[:–\-]?\s*(.+)/i);
+    let courseOrienMatch = line.match(/^(COURSE ORIENTATION|MIDTERM|FINAL EXAMINATION?)/i);
+    let longExamMatch = line.match(/^LONG EXAMINATION\s+(\d+)/i);
 
-      // Detect topic lines
-      if (lowerLine.match(/^(topics?|content|focus|materials?|chapter)/i)) {
-        // Collect topics from this and next lines
-        let j = i + 1;
-        while (j < Math.min(i + 8, lines.length)) {
-          const topicLine = lines[j].trim();
-          
-          // Stop if we hit another section header
-          if (topicLine.match(/^(learning|assessment|resources|week\s+\d+)/i)) {
-            break;
-          }
-          
-          if (topicLine && topicLine.length > 3) {
-            // Clean up bullet points and numbering
-            const cleanTopic = topicLine.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '');
-            if (cleanTopic && currentWeek.topics.length < 8) {
-              currentWeek.topics.push(cleanTopic);
-            }
-          }
-          j++;
-        }
-        i = j - 1;
-        continue;
+    if (moduleMatch) {
+      const moduleNum = parseInt(moduleMatch[1]);
+      const moduleTitle = moduleMatch[2].trim();
+      
+      moduleCount++;
+      
+      // Extract module content (topics, subtopics)
+      const topics = extractModuleTopics(lines, i);
+      const outcomes = extractModuleOutcomes(lines, i);
+      const activities = extractTeachingActivities(lines, i);
+      const assessments = extractAssessmentTasks(lines, i);
+
+      if (topics.length > 0 || outcomes.length > 0) {
+        weeks.push({
+          weekNumber: moduleNum,
+          title: `MODULE ${moduleNum}: ${moduleTitle}`,
+          topics: topics,
+          learningOutcomes: outcomes,
+          teachingActivities: activities,
+          assessmentTasks: assessments,
+        });
       }
+    } else if (courseOrienMatch && !weeks.some(w => w.title.includes('ORIENTATION'))) {
+      // Add course orientation as week 0
+      const topics = extractModuleTopics(lines, i);
+      weeks.unshift({
+        weekNumber: 0,
+        title: 'COURSE ORIENTATION',
+        topics: topics.length > 0 ? topics : ['Course outline review', 'Syllabus discussion', 'Course policies'],
+        learningOutcomes: [],
+        teachingActivities: [],
+        assessmentTasks: [],
+      });
+    }
+  }
 
-      // Detect learning outcomes
-      if (lowerLine.match(/^(learning\s+outcomes?|objectives?|goals)/i)) {
-        let j = i + 1;
-        while (j < Math.min(i + 8, lines.length)) {
-          const outcomeLine = lines[j].trim();
-          
-          if (outcomeLine.match(/^(assessment|resources|week\s+\d+|topics?)/i)) {
-            break;
-          }
-          
-          if (outcomeLine && outcomeLine.length > 3) {
-            const cleanOutcome = outcomeLine.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '');
-            if (cleanOutcome && currentWeek.learningOutcomes && currentWeek.learningOutcomes.length < 5) {
-              currentWeek.learningOutcomes.push(cleanOutcome);
-            }
-          }
-          j++;
+  return weeks;
+}
+
+/**
+ * Extract topics from a MODULE section
+ * Looks for bullet points, subtopic headers, and content
+ */
+function extractModuleTopics(lines: string[], startIdx: number): string[] {
+  const topics: string[] = [];
+  let i = startIdx + 1;
+  let stopAtIndex = Math.min(startIdx + 30, lines.length);
+
+  // Find where this module's content ends (next MODULE or section)
+  for (let j = startIdx + 1; j < Math.min(startIdx + 40, lines.length); j++) {
+    const line = lines[j].trim();
+    if (line.match(/^MODULE\s+\d+|^LONG EXAMINATION|^MIDTERM|^FINAL/) && j > startIdx + 2) {
+      stopAtIndex = j;
+      break;
+    }
+  }
+
+  // Extract topics from content
+  while (i < stopAtIndex && topics.length < 15) {
+    const line = lines[i].trim();
+
+    // Look for SUBTOPIC headers and bullet points
+    if (line.match(/^SUBTOPIC\s+\d+|^[-•*]\s+/i)) {
+      const cleanLine = line
+        .replace(/^SUBTOPIC\s+\d+\s*[:–\-]?\s*/i, '')
+        .replace(/^[-•*]\s*/i, '')
+        .trim();
+
+      if (cleanLine && cleanLine.length > 3 && cleanLine.length < 200) {
+        // Avoid adding section headers
+        if (!cleanLine.match(/^(INTENDED|DETAILED|TEACHING|ASSESSMENT|CLO|WEEK)/i)) {
+          topics.push(cleanLine);
         }
-        i = j - 1;
-        continue;
       }
+    }
 
-      // Detect assessments
-      if (lowerLine.match(/^(assessment|evaluation|activities?)/i)) {
-        let j = i + 1;
-        while (j < Math.min(i + 6, lines.length)) {
-          const assessLine = lines[j].trim();
-          
-          if (assessLine.match(/^(week\s+\d+|topics?|learning)/i)) {
-            break;
-          }
-          
-          if (assessLine && assessLine.length > 3) {
-            const cleanAssess = assessLine.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '');
-            if (cleanAssess && currentWeek.assessments && currentWeek.assessments.length < 4) {
-              currentWeek.assessments.push(cleanAssess);
-            }
-          }
-          j++;
-        }
-        i = j - 1;
-        continue;
-      }
+    i++;
+  }
 
-      // Stop collecting for this week if we hit the next week
-      if (line.match(/^week\s+\d+/i)) {
-        i--;
+  return topics;
+}
+
+/**
+ * Extract intended learning outcomes from ILO column
+ */
+function extractModuleOutcomes(lines: string[], startIdx: number): string[] {
+  const outcomes: string[] = [];
+  let i = startIdx;
+  
+  // Look backwards or forwards for ILO section
+  for (let j = Math.max(0, startIdx - 5); j < Math.min(startIdx + 15, lines.length); j++) {
+    const line = lines[j].trim();
+    
+    if (line.match(/^(To|Understand|Know|Learn|Explain|Apply|Analyze|Design|Evaluate)/i)) {
+      if (line.length > 5 && line.length < 200) {
+        outcomes.push(line);
+        if (outcomes.length >= 5) break;
       }
     }
   }
 
-  // Don't forget the last week
-  if (currentWeek && currentWeek.topics.length > 0) {
-    weeks.push(currentWeek);
+  return outcomes;
+}
+
+/**
+ * Extract teaching and learning activities
+ */
+function extractTeachingActivities(lines: string[], startIdx: number): string[] {
+  const activities: string[] = [];
+  let i = startIdx;
+  let foundLIL = false;
+
+  // Look for "LIL:" marker and extract activities
+  for (let j = startIdx; j < Math.min(startIdx + 25, lines.length); j++) {
+    const line = lines[j].trim();
+    
+    if (line.includes('LIL:') || line.match(/^(Guided|Hands-on|Problem|Case|Think|Collaborative|Visualization|Error|Concept)/)) {
+      foundLIL = true;
+    }
+
+    if (foundLIL) {
+      // Extract activity descriptions (usually on lines starting with capital letter)
+      if (line.match(/^(Guided|Hands-on|Problem|Case|Think|Collaborative|Visualization|Error|Concept|Demonstration|Scenario|Worked|Incremental|Peer|Mini|Micro|Flowchart|Debugging|Gamified|Interactive|Exploration|Micro-Projects)/i)) {
+        // Clean up the line
+        const activity = line
+          .replace(/^[-–•*]\s*/, '')
+          .trim();
+        
+        if (activity && activity.length > 5 && activity.length < 300) {
+          activities.push(activity);
+        }
+        
+        if (activities.length >= 8) break;
+      }
+
+      // Stop at next MODULE or assessment section
+      if (line.match(/^(ASSESSMENT|MODULE\s+\d+|Formative|Lab Activity)/i) && activities.length > 0) {
+        break;
+      }
+    }
   }
 
-  return weeks;
+  return activities;
+}
+
+/**
+ * Extract assessment tasks
+ */
+function extractAssessmentTasks(lines: string[], startIdx: number): string[] {
+  const assessments: string[] = [];
+  let foundAT = false;
+
+  for (let j = startIdx; j < Math.min(startIdx + 30, lines.length); j++) {
+    const line = lines[j].trim();
+    
+    if (line.includes('ASSESSMENT TASK (AT)') || line.match(/^(Formative|Lab Activity|Long Exam)/i)) {
+      foundAT = true;
+    }
+
+    if (foundAT) {
+      const match = line.match(/^(Formative|Lab|Long|Quiz|Practical|Project|Exam)/i);
+      if (match) {
+        const task = line.replace(/^[-•*]\s*/, '').trim();
+        if (task && assessments.length < 4) {
+          assessments.push(task);
+        }
+      }
+
+      // Stop at next module
+      if (line.match(/^MODULE\s+\d+/i) && assessments.length > 0) {
+        break;
+      }
+    }
+  }
+
+  return assessments;
 }
 
 /**
@@ -261,15 +338,17 @@ function extractWeeklyContent(lines: string[]): WeekInfo[] {
  */
 function extractAssessmentInfo(lines: string[]): string | undefined {
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].toLowerCase().match(/^(assessment|grading|evaluation|evaluation criteria)/i)) {
-      // Collect next 5 lines as assessment info
+    if (lines[i].toUpperCase().includes('GRADING SYSTEM')) {
+      // Collect next 5-10 lines as assessment info
       let assessment = '';
-      for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
+      for (let j = i + 1; j < Math.min(i + 10, lines.length); j++) {
         const line = lines[j].trim();
-        if (!line || line.match(/^week/i)) break;
-        assessment += line + ' ';
+        if (!line || line.match(/^(INSTRUCTIONAL|TEXTBOOK|REFERENCES)/i)) break;
+        if (line.match(/^(Lecture|Lab|Class|Midterm|Final|Exam|Quiz)/i)) {
+          assessment += line + ' ';
+        }
       }
-      return assessment.trim().substring(0, 300);
+      return assessment.trim().substring(0, 400) || undefined;
     }
   }
   return undefined;
@@ -280,71 +359,58 @@ function extractAssessmentInfo(lines: string[]): string | undefined {
  */
 function extractPrerequisite(lines: string[]): string | undefined {
   for (let i = 0; i < Math.min(50, lines.length); i++) {
-    if (lines[i].toLowerCase().match(/^(prerequisite|pre-requisite|required before)/i)) {
-      const match = lines[i].match(/prerequisite[s]?[\s:]*(.+)/i);
-      if (match) return match[1].trim();
+    if (lines[i].toUpperCase().includes('PREREQUISITE')) {
+      const match = lines[i].match(/PREREQUISITE[\s:]*(.+)/i);
+      if (match) return match[1].trim().substring(0, 300);
     }
   }
   return undefined;
 }
 
 /**
- * Estimate total weeks if not explicitly found
- */
-function estimateTotalWeeks(lines: string[]): number {
-  const weekNumbers = new Set<number>();
-  
-  for (const line of lines) {
-    const match = line.match(/week\s+(\d+)/i);
-    if (match) {
-      weekNumbers.add(parseInt(match[1]));
-    }
-  }
-
-  if (weekNumbers.size > 0) {
-    return Math.max(...Array.from(weekNumbers));
-  }
-
-  // Default to 16 weeks if not found
-  return 16;
-}
-
-/**
  * Format the parsed syllabus into a concise string for AI processing
- * Eliminates unnecessary details and focuses on core content
+ * Emphasizes MODULE structure and focuses on practical content
  */
 export function formatParsedSyllabusForAI(parsed: ParsedSyllabus): string {
   let formatted = '';
 
-  formatted += `Course: ${parsed.courseName}\n`;
-  if (parsed.courseCode) formatted += `Code: ${parsed.courseCode}\n`;
-  if (parsed.credits) formatted += `Credits: ${parsed.credits}\n`;
+  formatted += `COURSE: ${parsed.courseName}\n`;
+  if (parsed.courseCode) formatted += `CODE: ${parsed.courseCode}\n`;
+  if (parsed.credits) formatted += `CREDITS: ${parsed.credits}\n`;
   
-  formatted += `\nDescription:\n${parsed.description}\n`;
+  formatted += `\nDESCRIPTION:\n${parsed.description}\n`;
   
   if (parsed.prerequisite) {
-    formatted += `\nPrerequisite: ${parsed.prerequisite}\n`;
+    formatted += `\nPREREQUISITE: ${parsed.prerequisite}\n`;
   }
 
-  formatted += `\nTotal Duration: ${parsed.totalWeeks} weeks\n`;
-  formatted += `\n${'='.repeat(60)}\nWEEKLY BREAKDOWN\n${'='.repeat(60)}\n`;
+  formatted += `\nTOTAL MODULES: ${parsed.totalWeeks}\n`;
+  formatted += `\n${'='.repeat(70)}\nMODULE BREAKDOWN\n${'='.repeat(70)}\n`;
 
-  // Format weekly content concisely
+  // Format module content concisely
   for (const week of parsed.weeks) {
-    formatted += `\nWEEK ${week.weekNumber}: ${week.title}\n`;
-    formatted += `Topics: ${week.topics.join(', ')}\n`;
+    formatted += `\n${week.title}\n`;
+    formatted += `${'─'.repeat(70)}\n`;
     
-    if (week.learningOutcomes && week.learningOutcomes.length > 0) {
-      formatted += `Outcomes: ${week.learningOutcomes.join('; ')}\n`;
+    if (week.topics.length > 0) {
+      formatted += `Topics: ${week.topics.join(' | ')}\n`;
     }
     
-    if (week.assessments && week.assessments.length > 0) {
-      formatted += `Assessment: ${week.assessments.join('; ')}\n`;
+    if (week.learningOutcomes && week.learningOutcomes.length > 0) {
+      formatted += `Learning Outcomes: ${week.learningOutcomes.slice(0, 3).join('; ')}\n`;
+    }
+    
+    if (week.teachingActivities && week.teachingActivities.length > 0) {
+      formatted += `Teaching Activities: ${week.teachingActivities.slice(0, 3).join('; ')}\n`;
+    }
+    
+    if (week.assessmentTasks && week.assessmentTasks.length > 0) {
+      formatted += `Assessment: ${week.assessmentTasks.join('; ')}\n`;
     }
   }
 
   if (parsed.assessmentInfo) {
-    formatted += `\n${'='.repeat(60)}\nASSESSMENT CRITERIA\n`;
+    formatted += `\n${'='.repeat(70)}\nGRADING CRITERIA\n`;
     formatted += `${parsed.assessmentInfo}\n`;
   }
 
